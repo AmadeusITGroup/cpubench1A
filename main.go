@@ -1,0 +1,243 @@
+package main
+
+import (
+	"context"
+	"flag"
+	"log"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"runtime"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/shirou/gopsutil/v3/cpu"
+)
+
+// Definition of the command line flags
+var (
+	flagWorkers  = flag.Int("workers", -1, "Number of workers")
+	flagThreads  = flag.Int("threads", -1, "Number of threads")
+	flagRun      = flag.Bool("run", false, "Run a single benchmark iteration")
+	flagBench    = flag.Bool("bench", false, "Run standard benchmark")
+	flagDuration = flag.Int("duration", 60, "Duration in seconds")
+	flagNb       = flag.Int("nb", 5, "Number of iterations")
+)
+
+// main entry point of the progam
+func main() {
+
+	flag.Parse()
+
+	// Fix number of of threads of the Go runtime.
+	// By default, 4 workers per thread.
+	if *flagThreads == -1 {
+		*flagThreads = runtime.NumCPU()
+	}
+	if *flagWorkers == -1 {
+		*flagWorkers = *flagThreads * 4
+	}
+	runtime.GOMAXPROCS(*flagThreads)
+
+	var err error
+	switch {
+	case *flagRun:
+		err = runBench()
+	case *flagBench:
+		err = stdBench()
+	default:
+		flag.Usage()
+		os.Exit(-1)
+	}
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	os.Exit(0)
+}
+
+// runBench runs a simple benchmark
+func runBench() error {
+
+	log.Printf("CPU benchmark with %d threads and %d workers", *flagThreads, *flagWorkers)
+
+	// We will maintain the workers busy by pre-filling a buffered channel
+	init := make(chan WorkerOp, *flagWorkers)
+	input := make(chan WorkerOp, 256*(*flagThreads))
+	output := make(chan int, *flagWorkers)
+
+	log.Printf("Initializing workers")
+
+	// Spawn workers and trigger initialization
+	workers := []*Worker{}
+	for i := 0; i < *flagWorkers; i++ {
+		w := NewWorker(i, init, input, output)
+		workers = append(workers, w)
+		go w.Run()
+		init <- OpInit
+	}
+
+	// Wait for all workers to be initialized
+	for i := 0; i < *flagWorkers; i++ {
+		_ = <-output
+	}
+
+	// Start the benchmark: it will run for a given duration
+	log.Printf("Start")
+	begin := time.Now()
+	stop := make(chan bool)
+	time.AfterFunc(time.Duration(*flagDuration)*time.Second, func() {
+		log.Printf("Stop signal")
+		stop <- true
+	})
+
+LOOP:
+	// Benchmark loop: we avoid checking for the timeout too often
+	for {
+		select {
+		case _ = <-stop:
+			break LOOP
+		default:
+			for i := 0; i < *flagThreads*16; i++ {
+				input <- OpStep
+			}
+		}
+	}
+
+	// Signal the end of the benchmark to workers, and aggregate results
+	for i := 0; i < *flagWorkers; i++ {
+		input <- OpExit
+	}
+	nb := 0
+	for i := 0; i < *flagWorkers; i++ {
+		nb += <-output
+	}
+	end := time.Now()
+	log.Printf("End")
+
+	// Calculate resulting throughput
+	ns := float64(end.Sub(begin).Nanoseconds())
+	log.Printf("THROUGHPUT %.6f", float64(nb)*1000000000.0/ns)
+	log.Print()
+	return nil
+}
+
+// stdBench runs multiple benchmarks (single-threaded and then multi-threaded)
+func stdBench() error {
+
+	// Display CPU information
+	if err := displayCPU(); err != nil {
+		return nil
+	}
+
+	// Run multiple benchmarks in sequence
+	log.Print("Single threaded performance")
+	log.Print("===========================")
+	log.Print()
+	for i := 0; i < *flagNb; i++ {
+		if err := spawnBench(1); err != nil {
+			return err
+		}
+	}
+
+	// Run multiple benchmarks in sequence
+	log.Print("Multi-threaded performance")
+	log.Print("==========================")
+	log.Print()
+	for i := 0; i < *flagNb; i++ {
+		if err := spawnBench(*flagWorkers); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// spawnBench runs a benchmark as an external process
+func spawnBench(workers int) error {
+
+	// Get executable path
+	executable, err := os.Executable()
+	if err != nil {
+		return nil
+	}
+
+	// Build parameters
+	opt := []string{
+		"-run",
+		"-threads", strconv.Itoa(*flagThreads),
+		"-workers", strconv.Itoa(workers),
+		"-duration", strconv.Itoa(*flagDuration),
+		"-nb", strconv.Itoa(*flagNb),
+	}
+
+	// Execute command in blocking mode
+	cmd := exec.Command(executable, opt...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// displayCPU displays some CPU information
+func displayCPU() error {
+
+	ctx := context.Background()
+
+	// Get type of CPU, frequency
+	cpuinfo, err := cpu.InfoWithContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("CPU: %s / %s", cpuinfo[0].VendorID, cpuinfo[0].ModelName)
+	log.Printf("Max freq: %.2f mhz (as reported by OS)", cpuinfo[0].Mhz)
+
+	// The core/thread count is wrong on some architectures
+	nc, err := cpu.CountsWithContext(ctx, false)
+	if err != nil {
+		return err
+	}
+	nt, err := cpu.CountsWithContext(ctx, true)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("Cores: %d", nc)
+	log.Printf("Threads: %d", nt)
+
+	// Fetch NUMA topology
+	numa := map[int]int{}
+	if files, err := filepath.Glob("/sys/devices/system/node/node[0-9]*/cpu[0-9]*"); err == nil {
+		for _, f := range files {
+			t := strings.Split(strings.TrimPrefix(f, "/sys/devices/system/node/"), "/")
+			if len(t) > 1 {
+				var n, c int
+				if n, err = strconv.Atoi(strings.TrimPrefix(t[0], "node")); err != nil {
+					continue
+				}
+				if c, err = strconv.Atoi(strings.TrimPrefix(t[1], "cpu")); err != nil {
+					continue
+				}
+				numa[c] = n
+			}
+		}
+	}
+
+	// Display NUMA topology
+	for _, c := range cpuinfo {
+		n, ok := numa[int(c.CPU)]
+		if !ok {
+			n = -1
+		}
+		log.Printf("CPU:%3d Socket:%3s CoreId:%3s Node:%3d", c.CPU, c.PhysicalID, c.CoreID, n)
+	}
+	log.Print()
+
+	return nil
+}
