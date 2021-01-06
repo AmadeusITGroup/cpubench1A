@@ -17,11 +17,11 @@ import (
 
 // Definition of the command line flags
 var (
-	flagWorkers  = flag.Int("workers", -1, "Number of workers")
-	flagThreads  = flag.Int("threads", -1, "Number of threads")
-	flagRun      = flag.Bool("run", false, "Run a single benchmark iteration")
-	flagBench    = flag.Bool("bench", false, "Run standard benchmark")
-	flagDuration = flag.Int("duration", 60, "Duration in seconds")
+	flagWorkers  = flag.Int("workers", -1, "Number of workers. Default is 4*threads")
+	flagThreads  = flag.Int("threads", -1, "Number of Go threads (i.e. GOMAXPROCS). Default is all OS processors")
+	flagRun      = flag.Bool("run", false, "Run a single benchmark iteration. Mutually exclusive with -bench")
+	flagBench    = flag.Bool("bench", false, "Run standard benchmark (multiple iterations). Mutually exclusive with -run")
+	flagDuration = flag.Int("duration", 60, "Duration in seconds of a single iteration")
 	flagNb       = flag.Int("nb", 5, "Number of iterations")
 )
 
@@ -40,6 +40,7 @@ func main() {
 	}
 	runtime.GOMAXPROCS(*flagThreads)
 
+	// Run a single iteration or a full benchmark
 	var err error
 	switch {
 	case *flagRun:
