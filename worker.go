@@ -54,7 +54,7 @@ func (w *Worker) Run() {
 			w.nb++
 		case OpExit:
 			w.Exit()
-			break
+			return
 		default:
 			log.Printf("Wrong operation %d", op)
 		}

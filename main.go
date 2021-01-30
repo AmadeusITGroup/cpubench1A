@@ -22,7 +22,7 @@ var (
 	flagRun      = flag.Bool("run", false, "Run a single benchmark iteration. Mutually exclusive with -bench")
 	flagBench    = flag.Bool("bench", false, "Run standard benchmark (multiple iterations). Mutually exclusive with -run")
 	flagDuration = flag.Int("duration", 60, "Duration in seconds of a single iteration")
-	flagNb       = flag.Int("nb", 5, "Number of iterations")
+	flagNb       = flag.Int("nb", 10, "Number of iterations")
 )
 
 // main entry point of the progam
@@ -66,7 +66,7 @@ func runBench() error {
 
 	// We will maintain the workers busy by pre-filling a buffered channel
 	init := make(chan WorkerOp, *flagWorkers)
-	input := make(chan WorkerOp, 256*(*flagThreads))
+	input := make(chan WorkerOp, *flagWorkers*32)
 	output := make(chan int, *flagWorkers)
 
 	log.Printf("Initializing workers")
@@ -101,7 +101,7 @@ LOOP:
 		case _ = <-stop:
 			break LOOP
 		default:
-			for i := 0; i < *flagThreads*16; i++ {
+			for i := 0; i < *flagWorkers*16; i++ {
 				input <- OpStep
 			}
 		}
