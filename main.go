@@ -21,6 +21,7 @@ var (
 	flagThreads  = flag.Int("threads", -1, "Number of Go threads (i.e. GOMAXPROCS). Default is all OS processors")
 	flagRun      = flag.Bool("run", false, "Run a single benchmark iteration. Mutually exclusive with -bench")
 	flagBench    = flag.Bool("bench", false, "Run standard benchmark (multiple iterations). Mutually exclusive with -run")
+	flagFreq     = flag.Bool("freq", false, "Measure the frequency of the CPU")
 	flagDuration = flag.Int("duration", 60, "Duration in seconds of a single iteration")
 	flagNb       = flag.Int("nb", 10, "Number of iterations")
 )
@@ -47,6 +48,8 @@ func main() {
 		err = runBench()
 	case *flagBench:
 		err = stdBench()
+	case *flagFreq:
+		err = measureFreq()
 	default:
 		flag.Usage()
 		os.Exit(-1)
@@ -239,6 +242,27 @@ func displayCPU() error {
 		log.Printf("CPU:%3d Socket:%3s CoreId:%3s Node:%3d", c.CPU, c.PhysicalID, c.CoreID, n)
 	}
 	log.Print()
+
+	return nil
+}
+
+// measureFreq attempts to measure the CPU frequency by counting CPU cycles
+func measureFreq() error {
+
+	// First run to warm the CPU
+	log.Println("Warming-up CPU")
+	CountASM(NFREQ)
+	log.Println("Measuring ...")
+
+	// Second run to perform the actual measurement
+	t := time.Now()
+	CountASM(NFREQ)
+	t2 := time.Now()
+	dur := t2.Sub(t).Seconds()
+
+	// The loop contains 1024 dependent instructions (1 cycle per instruction)
+	// plus a test/jump (resulting in 1 or 2 additional cycles)
+	log.Println("Frequency:", float64(NFREQ)/1024.0*ASMLoopCycles/dur/1.0e9, "GHz")
 
 	return nil
 }

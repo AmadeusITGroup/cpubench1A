@@ -37,8 +37,10 @@ Usage of ./cpubench1a:
     	Run standard benchmark (multiple iterations). Mutually exclusive with -run
   -duration int
     	Duration in seconds of a single iteration (default 60)
+  -freq
+    	Measure the frequency of the CPU
   -nb int
-    	Number of iterations (default 5)
+    	Number of iterations (default 10)
   -run
     	Run a single benchmark iteration. Mutually exclusive with -bench
   -threads int
@@ -133,6 +135,20 @@ Let's suppose on VM B with 64 vCPU, we have a multi-threaded score of 6100. VM B
 The relative power of vCPU between VM A and B is 112.5 / 95.31 = 1.18 in favor of VM A.
 
 We have a CPU bound workload running on 2000 VM of type A. How many VM of type B do we need to cover the same workload? We need 2000 * 48 * 1.18 / 64 = 1770 VMs.
+
+## CPU frequency measurement
+
+This tool also supports a CPU frequency measuremnet mechanism. It can be launched using: 
+
+```
+$ ./cpubench1a -freq
+```
+
+It should execute whithin a few seconds.
+
+The frequency is measured by counting the number of CPU cycles of a pre-defined loop, so it is independent from any system information exposed by the OS or the hypervisor. It has the benefit to measure a meaningful value, even if the hypervisor is lying to the guest OS.
+
+The command can be launched once (with no other activity on the machine) to measure the maximum frequency for one core. It can be launched multiple times in parallel to measure the maximum frequency when multiple cores are active (which can be different, due to CPU power management features).
 
 ## Versioning
 
