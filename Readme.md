@@ -69,26 +69,31 @@ The principle is very similar to SPECint or Coremark integer benchmarks. It is b
 - JSON messages parsing and encoding
 - building/using some btree data structures
 - a Monte-Carlo simulation calculating the availability of a NoSQL cluster
+- a 8 queens chess problem solver
 
 These algorithms are not specifically representative of a given Amadeus application or functional transaction. Compression/decompression, encoding/decoding, data structures management, sorting small datasets are typical of back-end software though.
 
 To check the benchmark is relevant (and the execution time of one algorithm does not dwarf all the other ones), the relative execution time of the various algorithms can be displayed using:
 
 ```
-$ go test -bench=.
+$ go test -bench=. -benchmem
 goos: linux
 goarch: amd64
 pkg: cpubench1a
-BenchmarkCompression-12    	    2732	    413155 ns/op
-BenchmarkAwk1-12           	    3524	    331972 ns/op
-BenchmarkAwk2-12           	    3718	    425116 ns/op
-BenchmarkJson-12           	    2221	    515674 ns/op
-BenchmarkBtree-12          	    3807	    313914 ns/op
-BenchmarkSort-12           	    2049	    539166 ns/op
-BenchmarkSimulation-12     	    1812	    661699 ns/op
+cpu: Intel(R) Core(TM) i7-8850H CPU @ 2.60GHz
+BenchmarkCompression-12    	    2866	    401775 ns/op	   45513 B/op	      17 allocs/op
+BenchmarkAwk1-12           	    3483	    340474 ns/op	   41608 B/op	     406 allocs/op
+BenchmarkAwk2-12           	    3312	    370813 ns/op	  141871 B/op	    1666 allocs/op
+BenchmarkJson-12           	    2226	    514021 ns/op	    7636 B/op	      87 allocs/op
+BenchmarkBtree-12          	    3847	    311502 ns/op	   28875 B/op	      13 allocs/op
+BenchmarkSort-12           	    2161	    542460 ns/op	     177 B/op	       4 allocs/op
+BenchmarkSimulation-12     	    1812	    653839 ns/op	   28988 B/op	    1218 allocs/op
+Benchmark8Queens-12        	    2809	    422138 ns/op	       0 B/op	       0 allocs/op
 PASS
-ok  	cpubench1a	8.931s
+ok  	cpubench1a	9.899s
 ```
+
+We try to make sure that each workload does not allocate too much in order to avoid benchmarking the garbage collector instead of the actual algorithms.
 
 The architecture of the benchmark program is the following. There are a main driver and multiple workers. The driver is pushing transactions to a queue. Each worker fetches transactions from the queue, and executes them. Each transaction executes the above algorithms (all of them). The implementation of these algorithms has been designed to be independent from the context (i.e. reentrant, no contention on shared data), and CPU bound. The queuing/dequeuing overhead is negligible compared to the transaction execution time. The queue is saturated for all the benchmark duration except at the end, so there is no wait state in the workers.
 
@@ -96,7 +101,7 @@ A single-threaded run only involves a single worker. A multi-threaded run involv
 
 Each test iteration runs for a given duration (typically 1 minute). The score of the benchmark is simply the number of transaction executions per second.
 
-A normal benchmark run involves 5 test iterations in single-threaded mode, and 5 test iterations in multi-threaded mode. The resulting score is defined as the **maximum** reported throughput in each category. Considering the maximum aims to counter the negative effect of CPU throttling, variable frequencies and noisy neighbours on some environments.
+A normal benchmark run involves 10 test iterations in single-threaded mode, and 10 test iterations in multi-threaded mode. The resulting score is defined as the **maximum** reported throughput in each category. Considering the maximum aims to counter the negative effect of CPU throttling, variable frequencies and noisy neighbours on some environments.
 
 ## Rationale: avoiding pitfalls
 

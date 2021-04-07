@@ -43,7 +43,7 @@ func NewWorker(id int, init chan WorkerOp, input chan WorkerOp, output chan int)
 func (w *Worker) Run() {
 
 	// Initialize the worker
-	_ = <-w.init
+	<-w.init
 	w.Init()
 
 	// Main worker loop, fetching operations from the input channel
@@ -72,6 +72,7 @@ func (w *Worker) Init() {
 		NewBenchJson(),
 		NewBenchBtree(),
 		NewBenchSimulation(),
+		NewBench8Queens(),
 	}
 	w.output <- 0
 }

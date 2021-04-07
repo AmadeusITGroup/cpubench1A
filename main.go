@@ -84,8 +84,8 @@ func runBench() error {
 	}
 
 	// Wait for all workers to be initialized
-	for i := 0; i < *flagWorkers; i++ {
-		_ = <-output
+	for range workers {
+		<-output
 	}
 
 	// Start the benchmark: it will run for a given duration
@@ -101,7 +101,7 @@ LOOP:
 	// Benchmark loop: we avoid checking for the timeout too often
 	for {
 		select {
-		case _ = <-stop:
+		case <-stop:
 			break LOOP
 		default:
 			for i := 0; i < *flagWorkers*16; i++ {
@@ -111,11 +111,11 @@ LOOP:
 	}
 
 	// Signal the end of the benchmark to workers, and aggregate results
-	for i := 0; i < *flagWorkers; i++ {
+	for range workers {
 		input <- OpExit
 	}
 	nb := 0
-	for i := 0; i < *flagWorkers; i++ {
+	for range workers {
 		nb += <-output
 	}
 	end := time.Now()

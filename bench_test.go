@@ -52,3 +52,10 @@ func BenchmarkSimulation(b *testing.B) {
 		x.Run()
 	}
 }
+
+func Benchmark8Queens(b *testing.B) {
+	x := NewBench8Queens()
+	for n := 0; n < b.N; n++ {
+		x.Run()
+	}
+}
