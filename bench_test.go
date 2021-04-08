@@ -32,10 +32,17 @@ func BenchmarkJson(b *testing.B) {
 	}
 }
 
-func BenchmarkBtree(b *testing.B) {
+func BenchmarkBtree1(b *testing.B) {
 	x := NewBenchBtree()
 	for n := 0; n < b.N; n++ {
-		x.Run()
+		x.test1()
+	}
+}
+
+func BenchmarkBtree2(b *testing.B) {
+	x := NewBenchBtree()
+	for n := 0; n < b.N; n++ {
+		x.test2()
 	}
 }
 

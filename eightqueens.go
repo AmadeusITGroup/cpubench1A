@@ -6,17 +6,17 @@ import (
 	"strings"
 )
 
-// chessboard represent a chess board as 64 bits
+// chessboard represents a chess board as 64 bits
 type chessboard struct {
 	x uint64
 }
 
-// isset return true if a square is occupied, or marked
+// isset returns true if a square is marked
 func (cb *chessboard) isset(x, y int) bool {
 	return cb.x&(1<<uint(y*8+x)) != 0
 }
 
-// set marks or occupy a square
+// set marks a square
 func (cb *chessboard) set(x, y int) {
 	cb.x |= 1 << uint(y*8+x)
 }

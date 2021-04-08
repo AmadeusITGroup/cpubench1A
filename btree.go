@@ -12,6 +12,7 @@ import (
 type BenchBtree struct {
 	users  []*Item
 	others []*Item
+	sout   []string
 }
 
 // Item is just a simple key/value structure
@@ -57,7 +58,11 @@ func NewBenchBtree() *BenchBtree {
 		&Item{Key: "user:13", Val: "Bidule"},
 		&Item{Key: "user:14", Val: "Dan"},
 		&Item{Key: "user:15", Val: "Anselme"},
-		&Item{Key: "user:16", Val: "Johm"},
+		&Item{Key: "user:16", Val: "John"},
+		&Item{Key: "person:1", Val: "Bob"},
+		&Item{Key: "person:2", Val: "Dan"},
+		&Item{Key: "employee:1", Val: "Peter"},
+		&Item{Key: "employee:2", Val: "Homer"},
 	}
 
 	// Build some more items based on the JSON data
@@ -71,7 +76,11 @@ func NewBenchBtree() *BenchBtree {
 		s = s[i2+1:]
 	}
 
-	return &BenchBtree{users: users, others: others}
+	return &BenchBtree{
+		users:  users,
+		others: others,
+		sout:   make([]string, 0, 2*len(users)),
+	}
 }
 
 // Run executes a benchmark step
@@ -93,26 +102,30 @@ func (b *BenchBtree) test1() {
 	}
 
 	// Retrieve all values from them
-	for i := 0; i < 16; i++ {
+	for i := 0; i < 64; i++ {
 		for _, user := range b.users {
 			keys.Get(user)
 			vals.Get(user)
 		}
 	}
 
-	s := make([]string, 0, 2*len(b.users))
-
 	// Build a list of values by forward iteration
 	keys.Ascend(nil, func(item interface{}) bool {
-		s = append(s, item.(*Item).Val)
+		b.sout = append(b.sout, item.(*Item).Val)
 		return true
 	})
 
 	// Complete with a list of keys by forward iteration
 	vals.Ascend(nil, func(item interface{}) bool {
-		s = append(s, item.(*Item).Key)
+		b.sout = append(b.sout, item.(*Item).Key)
 		return true
 	})
+
+	// Sanity check
+	if len(b.sout) != 2*len(b.users) {
+		log.Fatal("btree: wrong number of items")
+	}
+	b.sout = b.sout[:0]
 }
 
 // test2 builds a bigger btree with a map, and compare items between them, before iterating on the btree
@@ -121,7 +134,7 @@ func (b *BenchBtree) test2() {
 	keys := btree.New(byKeys)
 
 	// Build the btree and the map
-	m := map[string]*Item{}
+	m := make(map[string]*Item, 128)
 	for _, other := range b.others {
 		keys.Set(other)
 		m[other.Key] = other
