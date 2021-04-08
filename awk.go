@@ -61,8 +61,6 @@ var awkPROG2 = []byte(`
 END { print "Resulat", a, c }
 `)
 
-var awkINPUT = []byte(jsonAirlines)
-
 // NewBenchAwk allocates a new benchmark object
 func NewBenchAwk() *BenchAwk {
 	return &BenchAwk{}
@@ -81,7 +79,7 @@ func (b *BenchAwk) test1() {
 		log.Fatal(err)
 	}
 	config := &interp.Config{
-		Stdin:  bytes.NewReader(awkINPUT),
+		Stdin:  bytes.NewReader(jsonAirlinesB),
 		Output: &b.res,
 		Vars:   []string{"OFS", ":"},
 	}
@@ -99,7 +97,7 @@ func (b *BenchAwk) test2() {
 		log.Fatal(err)
 	}
 	config := &interp.Config{
-		Stdin:  bytes.NewReader(awkINPUT[:20000]),
+		Stdin:  bytes.NewReader(jsonAirlinesB[:20000]),
 		Output: &b.res,
 		Vars:   []string{"FS", ":"},
 	}

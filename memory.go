@@ -5,11 +5,11 @@ import (
 	"math/rand"
 )
 
+// Arbitrary seed
 const MEM_SEED = 12345
 
-var memINPUT = []byte(jsonAirlines)
-
-// BenchMemory is a benchmark exercizing the L2/L3 cache
+// BenchMemory is a benchmark exercizing the L2/L3 cache.
+// A buffer is built sequentially by aggregating scattered data.
 type BenchMemory struct {
 	input []byte
 	idx   []int64
@@ -19,13 +19,16 @@ type BenchMemory struct {
 	rd    *bytes.Reader
 }
 
-// NewBenchSort creates a new sorting benchmark
+// NewBenchMemory creates a new memory benchmark
 func NewBenchMemory() *BenchMemory {
 
-	input := append([]byte(nil), memINPUT...)
-	input = append(input, memINPUT...)
+	// Build a large byte array
+	var input []byte
+	for i := 0; i < 2; i++ {
+		input = append(input, jsonAirlinesB...)
+	}
 
-	// Fill the index array with index of chunks of jsonAirlines
+	// Fill the index with offsets of chunks of the byte array
 	idx := []int64{}
 	for i := 0; i < len(input); i += 1024 {
 		idx = append(idx, int64(i))
@@ -46,7 +49,7 @@ func NewBenchMemory() *BenchMemory {
 	return res
 }
 
-// Run the sorting benchark
+// Run the memory benchmark
 func (b *BenchMemory) Run() {
 
 	// Shuffle the index

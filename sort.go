@@ -8,6 +8,7 @@ import (
 	"sort"
 )
 
+// Arbitrary seed
 const SORT_SEED = 1234
 const SORT_N = 1024
 
@@ -77,7 +78,7 @@ func NewBenchSort() *BenchSort {
 	return res
 }
 
-// Run the sorting benchark
+// Run the sorting benchmark
 func (b *BenchSort) Run() {
 
 	// Shuffle the slice of records
