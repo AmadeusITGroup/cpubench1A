@@ -70,6 +70,7 @@ The principle is very similar to SPECint or Coremark integer benchmarks. It is b
 - building/using some btree data structures
 - a Monte-Carlo simulation calculating the availability of a NoSQL cluster
 - a 8 queens chess problem solver
+- sequential buffer building with random memory access patterns  
 
 These algorithms are not specifically representative of a given Amadeus application or functional transaction. Compression/decompression, encoding/decoding, data structures management, sorting small datasets are typical of back-end software though.
 
@@ -81,16 +82,18 @@ goos: linux
 goarch: amd64
 pkg: cpubench1a
 cpu: Intel(R) Core(TM) i7-8850H CPU @ 2.60GHz
-BenchmarkCompression-12    	    2866	    401775 ns/op	   45513 B/op	      17 allocs/op
-BenchmarkAwk1-12           	    3483	    340474 ns/op	   41608 B/op	     406 allocs/op
-BenchmarkAwk2-12           	    3312	    370813 ns/op	  141871 B/op	    1666 allocs/op
-BenchmarkJson-12           	    2226	    514021 ns/op	    7636 B/op	      87 allocs/op
-BenchmarkBtree-12          	    3847	    311502 ns/op	   28875 B/op	      13 allocs/op
-BenchmarkSort-12           	    2161	    542460 ns/op	     177 B/op	       4 allocs/op
-BenchmarkSimulation-12     	    1812	    653839 ns/op	   28988 B/op	    1218 allocs/op
-Benchmark8Queens-12        	    2809	    422138 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCompression-12    	    2862	    405402 ns/op	   45513 B/op	      17 allocs/op
+BenchmarkAwk1-12           	    3476	    342440 ns/op	   37449 B/op	     404 allocs/op
+BenchmarkAwk2-12           	    6712	    225470 ns/op	  114404 B/op	     909 allocs/op
+BenchmarkJson-12           	    2364	    504520 ns/op	    7628 B/op	      87 allocs/op
+BenchmarkBtree1-12         	    7304	    162351 ns/op	    9785 B/op	       4 allocs/op
+BenchmarkBtree2-12         	    4490	    265895 ns/op	   13118 B/op	       4 allocs/op
+BenchmarkSort-12           	    2200	    551703 ns/op	     175 B/op	       4 allocs/op
+BenchmarkSimulation-12     	    1804	    669006 ns/op	   28984 B/op	    1218 allocs/op
+Benchmark8Queens-12        	    2787	    437889 ns/op	       0 B/op	       0 allocs/op
+BenchmarkMemory-12         	    2816	    445056 ns/op	    7705 B/op	       0 allocs/op
 PASS
-ok  	cpubench1a	9.899s
+ok  	cpubench1a	15.649s
 ```
 
 We try to make sure that each workload does not allocate too much in order to avoid benchmarking the garbage collector instead of the actual algorithms.
@@ -179,6 +182,3 @@ Many thanks to the authors of the following packages:
 ## License
 
 This software is under MIT License.
-
-
-

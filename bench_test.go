@@ -66,3 +66,10 @@ func Benchmark8Queens(b *testing.B) {
 		x.Run()
 	}
 }
+
+func BenchmarkMemory(b *testing.B) {
+	x := NewBenchMemory()
+	for n := 0; n < b.N; n++ {
+		x.Run()
+	}
+}

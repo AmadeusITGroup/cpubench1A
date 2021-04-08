@@ -73,6 +73,7 @@ func (w *Worker) Init() {
 		NewBenchBtree(),
 		NewBenchSimulation(),
 		NewBench8Queens(),
+		NewBenchMemory(),
 	}
 	w.output <- 0
 }
