@@ -88,6 +88,11 @@ func runBench() error {
 		<-output
 	}
 
+	// Run a synchronous garbage collection now to avoid processing the garbage
+	// associated to the initialization during the benchmark
+	runtime.GC()
+	runtime.GC()
+
 	// Start the benchmark: it will run for a given duration
 	log.Printf("Start")
 	begin := time.Now()

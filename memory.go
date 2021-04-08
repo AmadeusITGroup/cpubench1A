@@ -26,6 +26,7 @@ func NewBenchMemory() *BenchMemory {
 	var input []byte
 	for i := 0; i < 2; i++ {
 		input = append(input, jsonAirlinesB...)
+		input = append(input, jsonPopulationB...)
 	}
 
 	// Fill the index with offsets of chunks of the byte array
