@@ -99,7 +99,7 @@ func (b *BenchAwk) test2() {
 		log.Fatal(err)
 	}
 	config := &interp.Config{
-		Stdin:  bytes.NewReader(awkINPUT[:40000]),
+		Stdin:  bytes.NewReader(awkINPUT[:20000]),
 		Output: &b.res,
 		Vars:   []string{"FS", ":"},
 	}
