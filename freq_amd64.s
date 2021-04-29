@@ -13,17 +13,17 @@
 //)
 //
 //func main() {
-//	 TEXT("CountASM", NOSPLIT, "func(n int64) int")
-//	 x := Load(Param("n"), GP64())
+//   TEXT("CountASM", NOSPLIT, "func(n int64) int")
+//   x := Load(Param("n"), GP64())
 //   Label("loop")
 //   for i:=0; i<1024; i++ {
-//      SUBQ(U8(1),x)
+//       SUBQ(U8(1),x)
 //   }
-//	 CMPQ(x,U8(0))
+//   CMPQ(x,U8(0))
 //   JNE(LabelRef("loop"))
-//	 Store(x, ReturnIndex(0))
-//	 RET()
-//	 Generate()
+//   Store(x, ReturnIndex(0))
+//   RET()
+//   Generate()
 //}
 
 #include "textflag.h"
