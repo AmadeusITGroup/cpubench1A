@@ -24,6 +24,7 @@ var (
 	flagFreq     = flag.Bool("freq", false, "Measure the frequency of the CPU")
 	flagDuration = flag.Int("duration", 60, "Duration in seconds of a single iteration")
 	flagNb       = flag.Int("nb", 10, "Number of iterations")
+	flagRes      = flag.String("res", "", "Optional result append file")
 )
 
 // main entry point of the progam
@@ -128,8 +129,16 @@ LOOP:
 
 	// Calculate resulting throughput
 	ns := float64(end.Sub(begin).Nanoseconds())
-	log.Printf("THROUGHPUT %.6f", float64(nb)*1000000000.0/ns)
+	res := float64(nb) * 1000000000.0 / ns
+	log.Printf("THROUGHPUT %.6f", res)
+	if *flagRes != "" {
+		if err := AppendResult(*flagRes, *flagWorkers, res); err != nil {
+			log.Print(err)
+			log.Printf("Cannot write result into temporary file: %s", *flagRes)
+		}
+	}
 	log.Print()
+
 	return nil
 }
 
@@ -141,12 +150,19 @@ func stdBench() error {
 		return nil
 	}
 
+	// Create a temporary file storing the results
+	tmp, err := os.CreateTemp("", "cpubench1a-*")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(tmp.Name())
+
 	// Run multiple benchmarks in sequence
 	log.Print("Single threaded performance")
 	log.Print("===========================")
 	log.Print()
 	for i := 0; i < *flagNb; i++ {
-		if err := spawnBench(1); err != nil {
+		if err := spawnBench(1, tmp.Name()); err != nil {
 			return err
 		}
 	}
@@ -156,16 +172,19 @@ func stdBench() error {
 	log.Print("==========================")
 	log.Print()
 	for i := 0; i < *flagNb; i++ {
-		if err := spawnBench(*flagWorkers); err != nil {
+		if err := spawnBench(*flagWorkers, tmp.Name()); err != nil {
 			return err
 		}
 	}
 
+	// Display statistics from the temporary file
+	DisplayResult(tmp, *flagWorkers)
+	tmp.Close()
 	return nil
 }
 
 // spawnBench runs a benchmark as an external process
-func spawnBench(workers int) error {
+func spawnBench(workers int, resfile string) error {
 
 	// Get executable path
 	executable, err := os.Executable()
@@ -180,6 +199,7 @@ func spawnBench(workers int) error {
 		"-workers", strconv.Itoa(workers),
 		"-duration", strconv.Itoa(*flagDuration),
 		"-nb", strconv.Itoa(*flagNb),
+		"-res", resfile,
 	}
 
 	// Execute command in blocking mode
