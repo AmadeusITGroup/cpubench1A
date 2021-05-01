@@ -73,28 +73,23 @@ func readResult(f *os.File) (ResultMap, error) {
 // displayStat calculates basic statistics and displays them
 func displayStat(title string, r []float64) {
 
-	// Calculate min, max, average
-	min, max, sum := r[0], r[0], r[0]
-	for _, x := range r[1:] {
-		if x < min {
-			min = x
-		}
-		if x > max {
-			max = x
-		}
-		sum += x
-	}
-	avg := sum / float64(len(r))
-
-	// Calculate median
-	sort.Float64s(r)
+	// Calculate min, max, and median from sorted results
 	var median float64
+	sort.Float64s(r)
+	min, max := r[0], r[len(r)-1]
 	if len(r)%2 == 0 {
 		a, b := r[len(r)/2-1], r[len(r)/2]
 		median = (a + b) / 2.0
 	} else {
 		median = r[len(r)/2]
 	}
+
+	// Calculate average
+	sum := 0.0
+	for _, x := range r {
+		sum += x
+	}
+	avg := sum / float64(len(r))
 
 	// Display
 	log.Print(title)
