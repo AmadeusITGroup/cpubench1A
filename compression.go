@@ -18,10 +18,6 @@ type BenchCompression struct {
 	w    *zlib.Writer
 }
 
-var (
-	compressionInput = []byte(jsonPopulation)
-)
-
 // NewBenchCompression allocates a new benchmark object
 func NewBenchCompression() *BenchCompression {
 	return &BenchCompression{}
@@ -32,7 +28,7 @@ func (b *BenchCompression) Run() {
 
 	// Calculate hash code of input
 	h := fnv.New64a()
-	h.Write(compressionInput)
+	h.Write(jsonPopulationB)
 	h1 := h.Sum64()
 
 	// Compress the input
@@ -41,7 +37,7 @@ func (b *BenchCompression) Run() {
 	} else {
 		b.w.Reset(&b.buf1)
 	}
-	b.w.Write(compressionInput)
+	b.w.Write(jsonPopulationB)
 	b.w.Close()
 
 	// Encode the compressed result in base64
