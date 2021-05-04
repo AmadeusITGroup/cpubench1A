@@ -18,13 +18,13 @@ It is recommended to build the binaries on a reference machine (eventually diffe
 To build from source (for x86_64, from a x86_64 box):
 
 ```
-go build
+CGO_ENABLED=0 go build
 ```
 
 To build from source (for Aarch64, from a x86_64 box):
 
 ```
-GOOS=linux GOARCH=arm64  go build
+CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build
 ```
 
 The resulting binary is statically linked and not dependent on the Linux distribution or version (except a minimal 2.6.23 kernel version). In order to run the benchmark, the binary can be directly copied to the target machines, and run there. 
@@ -184,7 +184,8 @@ Because the purpose of this software is to compare the CPU efficiency of various
 
 | Version | Go compiler   |
 |---------|---------------|
-| 1.0     | 1.5.2         |
+| 1.0     | 1.15.2        |
+| 2.0     | 1.16.3        |
 
 The scores measured with different versions of this benchmark MUST NOT be compared.
 
