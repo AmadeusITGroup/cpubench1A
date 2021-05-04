@@ -106,7 +106,25 @@ A single-threaded run only involves a single worker. A multi-threaded run involv
 
 Each test iteration runs for a given duration (typically 1 minute). The score of the benchmark is simply the number of transaction executions per second.
 
-A normal benchmark run involves 10 test iterations in single-threaded mode, and 10 test iterations in multi-threaded mode. The resulting score is defined as the **maximum** reported throughput in each category. Considering the maximum aims to counter the negative effect of CPU throttling, variable frequencies and noisy neighbours on some environments.
+A normal benchmark run involves 10 test iterations in single-threaded mode, and 10 test iterations in multi-threaded mode. Statistics about the single-threaded and multi-threaded runs are given at the end.The resulting score is defined as the **maximum** reported throughput in each category. Considering the maximum aims to counter the negative effect of CPU throttling, variable frequencies and noisy neighbours on some environments.
+
+```
+2021/05/04 21:32:08 Results
+2021/05/04 21:32:08 =======
+2021/05/04 21:32:08 
+2021/05/04 21:32:08 Single thread
+2021/05/04 21:32:08     Minimum: 203.225590
+2021/05/04 21:32:08     Average: 203.990533
+2021/05/04 21:32:08      Median: 204.007989
+2021/05/04 21:32:08     Maximum: 204.833596
+2021/05/04 21:32:08 
+2021/05/04 21:32:08 Multi-thread
+2021/05/04 21:32:08     Minimum: 976.563635
+2021/05/04 21:32:08     Average: 1060.236858
+2021/05/04 21:32:08      Median: 1039.998520
+2021/05/04 21:32:08     Maximum: 1156.083724
+2021/05/04 21:32:08 
+```
 
 ## Rationale: avoiding pitfalls
 
