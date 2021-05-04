@@ -74,6 +74,7 @@ func (w *Worker) Init() {
 		NewBenchSimulation(),
 		NewBench8Queens(),
 		NewBenchMemory(),
+		NewBenchImage(),
 	}
 	w.output <- 0
 }

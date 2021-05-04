@@ -70,9 +70,10 @@ The principle is very similar to SPECint or Coremark integer benchmarks. It is b
 - building/using some btree data structures
 - a Monte-Carlo simulation calculating the availability of a NoSQL cluster
 - a 8 queens chess problem solver
-- sequential buffer building with random memory access patterns  
+- sequential buffer building with random memory access patterns
+- small image composition and jpeg encoding
 
-These algorithms are not specifically representative of a given Amadeus application or functional transaction. Compression/decompression, encoding/decoding, data structures management, sorting small datasets are typical of back-end software though.
+These algorithms are not specifically representative of a given Amadeus application or functional transaction. Compression/decompression, encoding/decoding, data structures management, sorting small datasets, buffer building from scattered memory accesses are typical of back-end software though.
 
 To check the benchmark is relevant (and the execution time of one algorithm does not dwarf all the other ones), the relative execution time of the various algorithms can be displayed using:
 
@@ -82,16 +83,17 @@ goos: linux
 goarch: amd64
 pkg: cpubench1a
 cpu: Intel(R) Core(TM) i7-8850H CPU @ 2.60GHz
-BenchmarkCompression-12    	    2862	    405402 ns/op	   45513 B/op	      17 allocs/op
-BenchmarkAwk1-12           	    3476	    342440 ns/op	   37449 B/op	     404 allocs/op
-BenchmarkAwk2-12           	    6712	    225470 ns/op	  114404 B/op	     909 allocs/op
-BenchmarkJson-12           	    2364	    504520 ns/op	    7628 B/op	      87 allocs/op
-BenchmarkBtree1-12         	    7304	    162351 ns/op	    9785 B/op	       4 allocs/op
-BenchmarkBtree2-12         	    4490	    265895 ns/op	   13118 B/op	       4 allocs/op
-BenchmarkSort-12           	    2200	    551703 ns/op	     175 B/op	       4 allocs/op
-BenchmarkSimulation-12     	    1804	    669006 ns/op	   28984 B/op	    1218 allocs/op
-Benchmark8Queens-12        	    2787	    437889 ns/op	       0 B/op	       0 allocs/op
-BenchmarkMemory-12         	    2816	    445056 ns/op	    7705 B/op	       0 allocs/op
+BenchmarkCompression-12    	    2887	    403963 ns/op	   45511 B/op	      17 allocs/op
+BenchmarkAwk1-12           	    3470	    341321 ns/op	   37435 B/op	     404 allocs/op
+BenchmarkAwk2-12           	    6648	    213466 ns/op	  114374 B/op	     909 allocs/op
+BenchmarkJson-12           	    2288	    512815 ns/op	    7631 B/op	      87 allocs/op
+BenchmarkBtree1-12         	    7351	    162890 ns/op	    9784 B/op	       4 allocs/op
+BenchmarkBtree2-12         	    4327	    268853 ns/op	   13119 B/op	       4 allocs/op
+BenchmarkSort-12           	    2188	    532966 ns/op	     176 B/op	       4 allocs/op
+BenchmarkSimulation-12     	    1774	    655716 ns/op	   28987 B/op	    1218 allocs/op
+Benchmark8Queens-12        	    2820	    420570 ns/op	       0 B/op	       0 allocs/op
+BenchmarkMemory-12         	    2546	    468438 ns/op	   10968 B/op	       0 allocs/op
+BenchmarkImage-12          	    1501	    796485 ns/op	     623 B/op	       9 allocs/op
 PASS
 ok  	cpubench1a	15.649s
 ```

@@ -73,3 +73,10 @@ func BenchmarkMemory(b *testing.B) {
 		x.Run()
 	}
 }
+
+func BenchmarkImage(b *testing.B) {
+	x := NewBenchImage()
+	for n := 0; n < b.N; n++ {
+		x.Run()
+	}
+}
