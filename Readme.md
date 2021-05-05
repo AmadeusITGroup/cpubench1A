@@ -55,7 +55,7 @@ The canonical way to launch the benchmark is just:
 $ ./cpubench1a -bench
 ```
 
-By default, it runs for a bit more than 10 minutes (5 iterations of 60 seconds each for single and multiple threads). The default number of threads is the number of OS processors, and the default number of workers is 4 times the number of threads.
+By default, it runs for a bit more than 20 minutes (10 iterations of 60 seconds each for single and multiple threads). The default number of threads is the number of OS processors, and the default number of workers is 4 times the number of threads.
 
 Before launching the tests, the program displays some information about the CPU extracted from /proc/cpuinfo and the NUMA topology of the system (if available).
 
