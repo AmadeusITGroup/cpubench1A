@@ -70,10 +70,10 @@ The principle is very similar to SPECint or Coremark integer benchmarks. It is b
 - building/using some btree data structures
 - a Monte-Carlo simulation calculating the availability of a NoSQL cluster
 - a 8 queens chess problem solver
-- sequential buffer building with random memory access patterns
+- sequential buffer building with scattered memory access patterns
 - small image composition and jpeg encoding
 
-These algorithms are not specifically representative of a given Amadeus application or functional transaction. Compression/decompression, encoding/decoding, data structures management, sorting small datasets, buffer building from scattered memory accesses are typical of back-end software though.
+These algorithms are not specifically representative of a given Amadeus application or functional transaction. Compression/decompression, encoding/decoding, data structures management, sorting small datasets, buffer building from scattered memory accesses are typical of back-end software though. We do not really care about the absolute throughput of each individual algorithm, but rather about the transactional throughput, each transaction being a sequence involving all the algorithms, each of them run on a small working set.
 
 To check the benchmark is relevant (and the execution time of one algorithm does not dwarf all the other ones), the relative execution time of the various algorithms can be displayed using:
 
