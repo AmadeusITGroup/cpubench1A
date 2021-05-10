@@ -13,6 +13,8 @@ An OS processor is defined as an entry in the /proc/cpuinfo file. Depending on t
 
 ## Build and launch
 
+The easiest way to run this tool is to directly download the binaries from github (see the releases). If this is not possible or acceptable, it is easy enough to build it, provided the correct version of the Go compiler is installed.
+
 It is recommended to build the binaries on a reference machine (eventually different from the machines to be compared by the benchmark). The idea is to use the same binaries on all the machines part of the benchmark to make sure the same exact code is run everywhere. We suggest to use any Linux x86_64 box supporting the Go toolchain (no specific constraint here), and build the ARM binary using cross compilation.
 
 To build from source (for x86_64, from a x86_64 box):
