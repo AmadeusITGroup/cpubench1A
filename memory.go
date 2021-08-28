@@ -7,16 +7,17 @@ import (
 
 // Arbitrary seed
 const MEM_SEED = 12345
+const MEM_BLOCK = 13
 
 // BenchMemory is a benchmark exercizing the L2/L3 cache.
 // A buffer is built sequentially by aggregating scattered data.
+// We avoid using memmove which may be optimized differently depending on the CPU.
 type BenchMemory struct {
 	input []byte
-	idx   []int64
+	idx   []int
 	r     *rand.Rand
 	res   bytes.Buffer
 	buf   []byte
-	rd    *bytes.Reader
 }
 
 // NewBenchMemory creates a new memory benchmark
@@ -30,9 +31,10 @@ func NewBenchMemory() *BenchMemory {
 	}
 
 	// Fill the index with offsets of chunks of the byte array
-	idx := []int64{}
-	for i := 0; i < len(input); i += 1024 {
-		idx = append(idx, int64(i))
+	idx := []int{}
+	// Avoid to align memory blocks, ensure MEM_BLOCK bytes can be read from the index
+	for i := 0; i < len(input)-MEM_BLOCK; i += 1023 {
+		idx = append(idx, i)
 	}
 
 	// The index will be shuffled at each iteration, but in a deterministic way
@@ -43,8 +45,7 @@ func NewBenchMemory() *BenchMemory {
 		input: input,
 		idx:   idx,
 		r:     r,
-		buf:   make([]byte, 128),
-		rd:    bytes.NewReader(input),
+		buf:   make([]byte, MEM_BLOCK), // Not a power of 2
 	}
 
 	return res
@@ -60,11 +61,16 @@ func (b *BenchMemory) Run() {
 
 	// Use the index to fetch and copy the first bytes of each chunk
 	for _, idx := range b.idx {
-		n, err := b.rd.ReadAt(b.buf, idx)
-		if err == nil && n == 128 {
-			b.res.Write(b.buf)
-		}
+		b.readBlock(idx)
+		b.res.Write(b.buf)
 	}
 
 	b.res.Reset()
+}
+
+func (b *BenchMemory) readBlock(idx int) {
+	// Do not use optimized memmove mechanisms - simple loop is preferred
+	for i := range b.buf {
+		b.buf[i] = b.input[idx+i]
+	}
 }
