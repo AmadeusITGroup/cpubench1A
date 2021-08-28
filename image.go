@@ -12,8 +12,8 @@ import (
 	"strings"
 )
 
-const IMG_W = 160
-const IMG_H = 160
+const IMG_W = 128
+const IMG_H = 128
 const IMG_DEBUG = false
 
 // ImageBuffer is a normal buffer with a dummy Flush to avoid extra allocations with jpeg.Encode
