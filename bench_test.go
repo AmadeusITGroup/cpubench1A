@@ -80,3 +80,30 @@ func BenchmarkImage(b *testing.B) {
 		x.Run()
 	}
 }
+
+func BenchmarkCrypto(b *testing.B) {
+	x := NewBenchCrypto()
+	for n := 0; n < b.N; n++ {
+		x.Run()
+	}
+}
+
+func BenchmarkAll(b *testing.B) {
+	benchmarks := []Benchmark{
+		NewBenchCompression(),
+		NewBenchSort(),
+		NewBenchAwk(),
+		NewBenchJson(),
+		NewBenchBtree(),
+		NewBenchSimulation(),
+		NewBench8Queens(),
+		NewBenchMemory(),
+		NewBenchImage(),
+		NewBenchCrypto(),
+	}
+	for n := 0; n < b.N; n++ {
+		for _, x := range benchmarks {
+			x.Run()
+		}
+	}
+}
