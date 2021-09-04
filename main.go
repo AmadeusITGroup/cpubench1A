@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -15,6 +16,9 @@ import (
 	"github.com/shirou/gopsutil/v3/cpu"
 )
 
+// Version of the program
+const Version = "3.0-dev"
+
 // Definition of the command line flags
 var (
 	flagWorkers  = flag.Int("workers", -1, "Number of workers. Default is 4*threads")
@@ -25,6 +29,7 @@ var (
 	flagDuration = flag.Int("duration", 60, "Duration in seconds of a single iteration")
 	flagNb       = flag.Int("nb", 10, "Number of iterations")
 	flagRes      = flag.String("res", "", "Optional result append file")
+	flagVersion  = flag.Bool("version", false, "Display program version and exit")
 )
 
 // main entry point of the progam
@@ -51,6 +56,8 @@ func main() {
 		err = stdBench()
 	case *flagFreq:
 		err = measureFreq()
+	case *flagVersion:
+		err = displayVersion()
 	default:
 		flag.Usage()
 		os.Exit(-1)
@@ -146,6 +153,8 @@ LOOP:
 func stdBench() error {
 
 	// Display CPU information
+	log.Println("Version: ", Version)
+	log.Print()
 	if err := displayCPU(); err != nil {
 		return nil
 	}
@@ -275,6 +284,7 @@ func displayCPU() error {
 func measureFreq() error {
 
 	// First run to warm the CPU
+	log.Println("Version:", Version)
 	log.Println("Warming-up CPU")
 	CountASM(NFREQ)
 	log.Println("Measuring ...")
@@ -289,5 +299,11 @@ func measureFreq() error {
 	// plus a test/jump (resulting in 1 or 2 additional cycles)
 	log.Println("Frequency:", float64(NFREQ)/1024.0*ASMLoopCycles/dur/1.0e9, "GHz")
 
+	return nil
+}
+
+// displayVersion just prints the program version
+func displayVersion() error {
+	fmt.Println("Version:", Version)
 	return nil
 }

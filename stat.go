@@ -36,6 +36,8 @@ func DisplayResult(f *os.File, workers int) error {
 	log.Print("Results")
 	log.Print("=======")
 	log.Print()
+	log.Println("Version:", Version)
+	log.Print()
 
 	// Display statistics on results
 	displayStat("Single thread", m[1])
