@@ -26,14 +26,14 @@ func (ib *ImageBuffer) Flush() error {
 	return nil
 }
 
-// BenchJson is a JSON decoding/encoding benchmark
+// BenchImage is an image composition and encoding benchmark
 type BenchImage struct {
 	img *image.RGBA
 	wil *image.RGBA
 	buf ImageBuffer
 }
 
-// NewBenchJson allocates a new benchmark object
+// NewBenchImage allocates a new benchmark object
 func NewBenchImage() *BenchImage {
 
 	// Read Wilson image
@@ -52,7 +52,7 @@ func NewBenchImage() *BenchImage {
 	}
 }
 
-// Run does compose an image and generate jpeg and png data from it
+// Run does compose an image and generate jpeg data from it
 func (b *BenchImage) Run() {
 
 	b.chessboard()
