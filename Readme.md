@@ -43,10 +43,14 @@ Usage of ./cpubench1a:
     	Measure the frequency of the CPU
   -nb int
     	Number of iterations (default 10)
+  -res string
+    	Optional result append file
   -run
     	Run a single benchmark iteration. Mutually exclusive with -bench
   -threads int
     	Number of Go threads (i.e. GOMAXPROCS). Default is all OS processors (default -1)
+  -version
+    	Display program version and exit
   -workers int
     	Number of workers. Default is 4*threads (default -1)
 ```
@@ -74,8 +78,9 @@ The principle is very similar to SPECint or Coremark integer benchmarks. It is b
 - a 8 queens chess problem solver
 - sequential buffer building with scattered memory access patterns
 - small image composition and jpeg encoding
+- basic cryptography exercising 3DES/CTR algorithms
 
-These algorithms are not specifically representative of a given Amadeus application or functional transaction. Compression/decompression, encoding/decoding, data structures management, sorting small datasets, buffer building from scattered memory accesses are typical of back-end software though. We do not really care about the absolute throughput of each individual algorithm, but rather about the transactional throughput, each transaction being a sequence involving all the algorithms, each of them run on a small working set.
+These algorithms are not specifically representative of a given Amadeus application or functional transaction. Compression/decompression, encoding/decoding, crypto, data structures management, sorting small datasets, buffer building from scattered memory accesses are typical of back-end software though. We do not really care about the absolute throughput of each individual algorithm, but rather about the transactional throughput, each transaction being a sequence involving all the algorithms, each of them run on a small working set.
 
 To check the benchmark is relevant (and the execution time of one algorithm does not dwarf all the other ones), the relative execution time of the various algorithms can be displayed using:
 
@@ -85,20 +90,24 @@ goos: linux
 goarch: amd64
 pkg: cpubench1a
 cpu: Intel(R) Core(TM) i7-8850H CPU @ 2.60GHz
-BenchmarkCompression-12    	    2887	    403963 ns/op	   45511 B/op	      17 allocs/op
-BenchmarkAwk1-12           	    3470	    341321 ns/op	   37435 B/op	     404 allocs/op
-BenchmarkAwk2-12           	    6648	    213466 ns/op	  114374 B/op	     909 allocs/op
-BenchmarkJson-12           	    2288	    512815 ns/op	    7631 B/op	      87 allocs/op
-BenchmarkBtree1-12         	    7351	    162890 ns/op	    9784 B/op	       4 allocs/op
-BenchmarkBtree2-12         	    4327	    268853 ns/op	   13119 B/op	       4 allocs/op
-BenchmarkSort-12           	    2188	    532966 ns/op	     176 B/op	       4 allocs/op
-BenchmarkSimulation-12     	    1774	    655716 ns/op	   28987 B/op	    1218 allocs/op
-Benchmark8Queens-12        	    2820	    420570 ns/op	       0 B/op	       0 allocs/op
-BenchmarkMemory-12         	    2546	    468438 ns/op	   10968 B/op	       0 allocs/op
-BenchmarkImage-12          	    1501	    796485 ns/op	     623 B/op	       9 allocs/op
+BenchmarkCompression-12    	    2871	    408945 ns/op	   45512 B/op	      17 allocs/op
+BenchmarkAwk1-12           	    3172	    353895 ns/op	   37441 B/op	     404 allocs/op
+BenchmarkAwk2-12           	    6447	    222125 ns/op	  114322 B/op	     909 allocs/op
+BenchmarkJson-12           	    2292	    507266 ns/op	    7636 B/op	      87 allocs/op
+BenchmarkBtree1-12         	    6813	    167283 ns/op	    9785 B/op	       4 allocs/op
+BenchmarkBtree2-12         	    4443	    280601 ns/op	   13118 B/op	       4 allocs/op
+BenchmarkSort-12           	    2163	    529695 ns/op	     177 B/op	       4 allocs/op
+BenchmarkSimulation-12     	    1840	    650841 ns/op	   28987 B/op	    1218 allocs/op
+Benchmark8Queens-12        	    2829	    412797 ns/op	       0 B/op	       0 allocs/op
+BenchmarkMemory-12         	    4154	    284873 ns/op	    5791 B/op	       0 allocs/op
+BenchmarkImage-12          	    1975	    580513 ns/op	     528 B/op	       9 allocs/op
+BenchmarkCrypto-12         	    2779	    409396 ns/op	    1379 B/op	      11 allocs/op
+BenchmarkAll-12            	     237	   4860258 ns/op	  368479 B/op	    2697 allocs/op
 PASS
-ok  	cpubench1a	15.649s
+ok  	cpubench1a	17.394s
 ```
+
+Each individual algorithm should represent only a fraction of the CPU consumption of the total (BenchmarkAll).
 
 We try to make sure that each workload does not allocate too much in order to avoid benchmarking the garbage collector instead of the actual algorithms.
 
