@@ -88,6 +88,13 @@ func BenchmarkCrypto(b *testing.B) {
 	}
 }
 
+func BenchmarkPearls(b *testing.B) {
+	x := NewBenchPearls()
+	for n := 0; n < b.N; n++ {
+		x.Run()
+	}
+}
+
 func BenchmarkAll(b *testing.B) {
 	benchmarks := []Benchmark{
 		NewBenchCompression(),
@@ -100,6 +107,7 @@ func BenchmarkAll(b *testing.B) {
 		NewBenchMemory(),
 		NewBenchImage(),
 		NewBenchCrypto(),
+		NewBenchPearls(),
 	}
 	for n := 0; n < b.N; n++ {
 		for _, x := range benchmarks {
