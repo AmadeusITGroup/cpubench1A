@@ -68,6 +68,7 @@ func (b *BenchMemory) Run() {
 	b.res.Reset()
 }
 
+//go:noinline
 func (b *BenchMemory) readBlock(idx int) {
 	// Do not use optimized memmove mechanisms - simple loop is preferred
 	for i := range b.buf {
