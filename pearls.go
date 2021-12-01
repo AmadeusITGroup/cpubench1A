@@ -2,7 +2,7 @@ package main
 
 import "log"
 
-// Arbitrary seed
+// Maximum number of iteration
 const PEARLS_N = 500
 
 // BenchPearls is a simple implementation of Dijkstra's pearls problem.

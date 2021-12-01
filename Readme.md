@@ -75,11 +75,12 @@ The principle is very similar to SPECint or Coremark integer benchmarks. It is b
 - JSON messages parsing and encoding
 - building/using some btree data structures
 - a Monte-Carlo simulation calculating the availability of a NoSQL cluster
-- a 8 queens chess problem solver
+- a 8 queens chess problem solver exercizing bit manipulation
 - sequential buffer building with scattered memory access patterns
 - small image composition and jpeg encoding
-- basic cryptography exercising 3DES/CTR algorithms
+- basic cryptography exercising (obsolete, but not hardware accelerated) 3DES/CTR algorithms
 - solving Dijkstra's pearls problem
+- top-k route exploring in small graphs
 
 These algorithms are not specifically representative of a given Amadeus application or functional transaction. Compression/decompression, encoding/decoding, crypto, data structures management, sorting small datasets, buffer building from scattered memory accesses are typical of back-end software though. We do not really care about the absolute throughput of each individual algorithm, but rather about the transactional throughput, each transaction being a sequence involving all the algorithms, each of them run on a small working set.
 
@@ -91,22 +92,23 @@ goos: linux
 goarch: amd64
 pkg: cpubench1a
 cpu: Intel(R) Core(TM) i7-8850H CPU @ 2.60GHz
-BenchmarkCompression-12    	    3049	    386162 ns/op	   45490 B/op	      17 allocs/op
-BenchmarkAwk1-12           	    4596	    271159 ns/op	   37482 B/op	     405 allocs/op
-BenchmarkAwk2-12           	    7002	    212586 ns/op	  114376 B/op	     910 allocs/op
-BenchmarkJson-12           	    1988	    524209 ns/op	    8680 B/op	      89 allocs/op
-BenchmarkBtree1-12         	    8228	    143678 ns/op	    9783 B/op	       4 allocs/op
-BenchmarkBtree2-12         	    5002	    238617 ns/op	   13117 B/op	       4 allocs/op
-BenchmarkSort-12           	    2649	    434825 ns/op	     158 B/op	       4 allocs/op
-BenchmarkSimulation-12     	    1982	    602981 ns/op	   28985 B/op	    1218 allocs/op
-Benchmark8Queens-12        	    2804	    408413 ns/op	       0 B/op	       0 allocs/op
-BenchmarkMemory-12         	    3924	    260379 ns/op	    6131 B/op	       0 allocs/op
-BenchmarkImage-12          	    2012	    559858 ns/op	     524 B/op	       9 allocs/op
-BenchmarkCrypto-12         	    3314	    366158 ns/op	    1376 B/op	      11 allocs/op
-BenchmarkPearls-12         	    3771	    303114 ns/op	       0 B/op	       0 allocs/op
-BenchmarkAll-12            	     247	   4652340 ns/op	  366185 B/op	    2700 allocs/op
+BenchmarkCompression-12    	    2593	    439639 ns/op	   45555 B/op	      17 allocs/op
+BenchmarkAwk1-12           	    3754	    302032 ns/op	   37480 B/op	     405 allocs/op
+BenchmarkAwk2-12           	    4953	    294598 ns/op	  114379 B/op	     910 allocs/op
+BenchmarkJson-12           	    1983	    639540 ns/op	    8675 B/op	      89 allocs/op
+BenchmarkBtree1-12         	    6598	    179429 ns/op	    9786 B/op	       4 allocs/op
+BenchmarkBtree2-12         	    3769	    292439 ns/op	   13121 B/op	       4 allocs/op
+BenchmarkSort-12           	    2192	    549793 ns/op	     176 B/op	       4 allocs/op
+BenchmarkSimulation-12     	    1562	    768235 ns/op	   28989 B/op	    1218 allocs/op
+Benchmark8Queens-12        	    2316	    512803 ns/op	       0 B/op	       0 allocs/op
+BenchmarkMemory-12         	    3652	    285971 ns/op	    6587 B/op	       0 allocs/op
+BenchmarkImage-12          	    1767	    669635 ns/op	     553 B/op	       9 allocs/op
+BenchmarkCrypto-12         	    2788	    424237 ns/op	    1379 B/op	      11 allocs/op
+BenchmarkPearls-12         	    3217	    353276 ns/op	       0 B/op	       0 allocs/op
+BenchmarkGraph-12          	    2308	    468617 ns/op	    2117 B/op	      44 allocs/op
+BenchmarkAll-12            	     186	   6212280 ns/op	  403179 B/op	    2754 allocs/op
 PASS
-ok  	cpubench1a	17.501s
+ok  	cpubench1a	19.733s
 ```
 
 Each individual algorithm should represent only a fraction of the CPU consumption of the total (BenchmarkAll).
