@@ -78,7 +78,7 @@ The principle is very similar to SPECint or Coremark integer benchmarks. It is b
 - a 8 queens chess problem solver exercizing bit manipulation
 - sequential buffer building with scattered memory access patterns
 - small image composition and jpeg encoding
-- basic cryptography exercising (obsolete, but not hardware accelerated) 3DES/CTR algorithms
+- basic cryptography exercising 3DES/CTR algorithms (obsolete, but not hardware accelerated)
 - solving Dijkstra's pearls problem
 - top-k route exploring in small graphs
 
@@ -201,7 +201,7 @@ Because the purpose of this software is to compare the CPU efficiency of various
 |---------|---------------|
 | 1.0     | 1.15.2        |
 | 2.0     | 1.16.3        |
-| 3.0     | 1.17.3        |
+| 3.0     | 1.17.4        |
 
 The scores measured with different versions of this benchmark MUST NOT be compared.
 
