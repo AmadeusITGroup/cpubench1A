@@ -82,7 +82,7 @@ The principle is very similar to SPECint or Coremark integer benchmarks. It is b
 - solving Dijkstra's pearls problem
 - top-k route exploring in small graphs
 
-These algorithms are not specifically representative of a given Amadeus application or functional transaction. Compression/decompression, encoding/decoding, crypto, data structures management, sorting small datasets, buffer building from scattered memory accesses are typical of back-end software though. We do not really care about the absolute throughput of each individual algorithm, but rather about the transactional throughput, each transaction being a sequence involving all the algorithms, each of them run on a small working set.
+These algorithms are not specifically representative of a given Amadeus application or functional transaction. Compression/decompression, encoding/decoding, crypto, data structures management, sorting small datasets, buffer building from scattered memory accesses are typical of back-end software though. The code mostly uses integers, with only few floating point operations. One difference with other benchmarks is we do not really care about the absolute throughput of each individual algorithm, but rather about the transactional throughput. Each transaction (5-10 ms) is defined as a sequence involving all the algorithms, each of them running on a small memory working set.
 
 To check the benchmark is relevant (and the execution time of one algorithm does not dwarf all the other ones), the relative execution time of the various algorithms can be displayed using:
 
