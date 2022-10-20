@@ -78,6 +78,7 @@ func (w *Worker) Init() {
 		NewBenchCrypto(),
 		NewBenchPearls(),
 		NewBenchGraph(),
+		NewBenchLogging(),
 	}
 	w.output <- 0
 }

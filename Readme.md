@@ -81,8 +81,9 @@ The principle is very similar to SPECint or Coremark integer benchmarks. It is b
 - basic cryptography exercising 3DES/CTR algorithms (obsolete, but not hardware accelerated)
 - solving Dijkstra's pearls problem
 - top-k route exploring in small graphs
+- formatted logging with concealment and repetition detection 
 
-These algorithms are not specifically representative of a given Amadeus application or functional transaction. Compression/decompression, encoding/decoding, crypto, data structures management, sorting small datasets, buffer building from scattered memory accesses are typical of back-end software though. The code mostly uses integers, with only few floating point operations. One difference with other benchmarks is we do not really care about the absolute throughput of each individual algorithm, but rather about the transactional throughput. Each transaction (5-10 ms) is defined as a sequence involving all the algorithms, each of them running on a small memory working set.
+These algorithms are not specifically representative of a given Amadeus application or functional transaction. Compression/decompression, encoding/decoding, crypto, data structures management, sorting small datasets, buffer building from scattered memory accesses, logging are typical of back-end software though. The code mostly uses integers, with only few floating point operations. One difference with other benchmarks is we do not really care about the absolute throughput of each individual algorithm, but rather about the transactional throughput. Each transaction (5-10 ms) is defined as a sequence involving all the algorithms, each of them running on a small memory working set.
 
 To check the benchmark is relevant (and the execution time of one algorithm does not dwarf all the other ones), the relative execution time of the various algorithms can be displayed using:
 
@@ -203,6 +204,7 @@ Because the purpose of this software is to compare the CPU efficiency of various
 | 2.0     | 1.16.3        |
 | 3.0     | 1.17.4        |
 | 3.1     | 1.18          |
+| 4.0     | 1.19.x        |
 
 The scores measured with different versions of this benchmark MUST NOT be compared.
 
