@@ -50,7 +50,7 @@ func (b *BenchLogging) Run() {
 		log.Fatal(err)
 	}
 	b.t = time.Date(1972, 1, 16, 10, 20, 0, 0, loc)
-	b.queue = make(chan []byte, 16)
+	b.queue = make(chan []byte, 8)
 
 	go b.processLogs()
 
@@ -58,15 +58,15 @@ func (b *BenchLogging) Run() {
 		b.log("checkin.cpp", 10+i, "INFO", "first\tfirst")
 	}
 	b.log("secu.cpp", 99, "INFO", "FYI, my credit card number is 1234-4321-1234-21 - feel free to use it")
-	for i := 0; i < 16; i++ {
+	for i := 0; i < 32; i++ {
 		b.log("boarding.cpp", 100, "WARN", "second\nsecond")
 	}
 	b.log("secu.cpp", 999, "INFO", "The credit card of my neighbor is 8792-4567-4321-22. Am I PCI-DSS compliant?")
-	for i := 0; i < 16; i++ {
+	for i := 0; i < 64; i++ {
 		b.log("checkout.cpp", 1000+i, "TRACE", "third\"third")
 	}
 	b.log("secu.cpp", 9999, "INFO", "Do not forget to help yourself using the 9001-1493-4378-23 credit card")
-	for i := 0; i < 16; i++ {
+	for i := 0; i < 128; i++ {
 		b.log("reporting.cpp", 10000, "INFO", "fourth\r\nfourth")
 	}
 	b.log("secu.cpp", 99999, "INFO", "Alarm! Hide this 1234-1234-1234-12 credit card")
