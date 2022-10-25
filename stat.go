@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"sort"
 )
@@ -86,18 +87,43 @@ func displayStat(title string, r []float64) {
 		median = r[len(r)/2]
 	}
 
-	// Calculate average
-	sum := 0.0
-	for _, x := range r {
-		sum += x
-	}
-	avg := sum / float64(len(r))
+	// Calculate average and geo man
+	avg := average(r)
+	geo := geoMean(r)
 
 	// Display
 	log.Print(title)
 	log.Printf("    Minimum: %.6f", min)
 	log.Printf("    Average: %.6f", avg)
 	log.Printf("     Median: %.6f", median)
+	log.Printf("   Geo mean: %.6f", geo)
 	log.Printf("    Maximum: %.6f", max)
 	log.Print()
+}
+
+// average calculates the arithmetic mean
+func average(r []float64) float64 {
+	if len(r) == 0 {
+		return math.NaN()
+	}
+	sum := 0.0
+	for _, x := range r {
+		sum += x
+	}
+	return sum / float64(len(r))
+}
+
+// geoMean calculates the geometric mean
+func geoMean(r []float64) float64 {
+	if len(r) == 0 {
+		return math.NaN()
+	}
+	sum := 0.0
+	for _, x := range r {
+		if x <= 0.0 {
+			return math.NaN()
+		}
+		sum += math.Log(x)
+	}
+	return math.Exp(sum / float64(len(r)))
 }
