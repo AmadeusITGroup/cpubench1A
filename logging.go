@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-// BenchLogging is a log formatting benchmark with concealment and repetition detection
+// BenchLogging is a log formatting benchmark with concealment and deduplication
 type BenchLogging struct {
 	mutex  sync.Mutex
 	pool   [][]byte
@@ -45,6 +45,7 @@ func NewBenchLogging() *BenchLogging {
 // Run does log a few lines and format them
 func (b *BenchLogging) Run() {
 
+	// Start from an arbitrary date
 	loc, err := time.LoadLocation("UTC")
 	if err != nil {
 		log.Fatal(err)
@@ -52,8 +53,10 @@ func (b *BenchLogging) Run() {
 	b.t = time.Date(1972, 1, 16, 10, 20, 0, 0, loc)
 	b.queue = make(chan []byte, 8)
 
+	// This goroutine simulates log processing (buffering, concealment and statistics)
 	go b.processLogs()
 
+	// Log a bunch of lines mixing duplicates and lines with credit cards
 	for i := 0; i < 16; i++ {
 		b.log("checkin.cpp", 10+i, "INFO", "first\tfirst")
 	}
@@ -70,11 +73,14 @@ func (b *BenchLogging) Run() {
 		b.log("reporting.cpp", 10000, "INFO", "fourth\r\nfourth")
 	}
 	b.log("secu.cpp", 99999, "INFO", "Alarm! Hide this 1234-1234-1234-12 credit card")
+
+	// Signal the end and wait for the goroutine termination
 	b.flush()
 	close(b.queue)
 	<-b.ack
 }
 
+// get returns a buffer to be used for log formatting
 func (b *BenchLogging) get() []byte {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
@@ -87,6 +93,7 @@ func (b *BenchLogging) get() []byte {
 	return ret
 }
 
+// put has to be called when the logging buffer can be discarded
 func (b *BenchLogging) put(buf []byte) {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
@@ -94,6 +101,7 @@ func (b *BenchLogging) put(buf []byte) {
 	b.pool = append(b.pool, buf)
 }
 
+// log adds a lot entry applying deduplication for juxtaposed entries
 func (b *BenchLogging) log(file string, line int, sev string, msg string) {
 	e := LogEntry{file, line, sev, msg}
 	if e == b.last {
@@ -105,6 +113,7 @@ func (b *BenchLogging) log(file string, line int, sev string, msg string) {
 	}
 }
 
+// flush should be called to force the log entry to be processed
 func (b *BenchLogging) flush() {
 	if b.cnt > 0 {
 		b.cnt++
@@ -115,6 +124,7 @@ func (b *BenchLogging) flush() {
 	}
 }
 
+// logEntry is a lower level method to add a log entry
 func (b *BenchLogging) logEntry(e LogEntry) {
 	b.t = b.t.Add(1 * time.Second)
 	buf := b.get()
@@ -130,6 +140,7 @@ func (b *BenchLogging) logEntry(e LogEntry) {
 	b.queue <- buf
 }
 
+// processLogs is the main loop of the log processing goroutine
 func (b *BenchLogging) processLogs() {
 
 	b.output.Reset()
@@ -144,6 +155,7 @@ func (b *BenchLogging) processLogs() {
 	b.ack <- true
 }
 
+// conceal detects credit card number and conceal them
 func (b *BenchLogging) conceal(x []byte) []byte {
 	if b.re.Find(x) == nil {
 		return x
@@ -151,6 +163,7 @@ func (b *BenchLogging) conceal(x []byte) []byte {
 	return b.re.ReplaceAll(x, []byte("XXXX-XXXX-XXXX-XX"))
 }
 
+// maintainStats counts the number of entries per severity
 func (b *BenchLogging) maintainStats(x []byte) {
 	n1 := bytes.IndexByte(x, ' ')
 	if n1 == -1 {
