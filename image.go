@@ -66,11 +66,9 @@ func (b *BenchImage) Run() {
 // chessboard composes a chessboard image
 func (b *BenchImage) chessboard() {
 
-	c1 := color.RGBA{0, 100, 0, 255}
-	c2 := color.RGBA{50, 205, 50, 255}
 	colors := []*image.Uniform{
-		&image.Uniform{c1},
-		&image.Uniform{c2},
+		{C: color.RGBA{0, 100, 0, 255}},
+		{C: color.RGBA{50, 205, 50, 255}},
 	}
 	ic := 0
 	sb := IMG_H / 8
