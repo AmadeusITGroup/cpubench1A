@@ -81,10 +81,8 @@ func (p *Path) contains(n Gid) bool {
 // set assigns data from an other path
 func (p *Path) set(other *Path) {
 	p.weight = 0.0
-	p.nodes = p.nodes[:0]
-	p.edges = p.edges[:0]
-	p.nodes = append(p.nodes, other.nodes...)
-	p.edges = append(p.edges, other.edges...)
+	p.nodes = append(p.nodes[:0], other.nodes...)
+	p.edges = append(p.edges[:0], other.edges...)
 }
 
 // pathPool is used to amortize the allocation cost of the path objects
