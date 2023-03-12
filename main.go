@@ -26,6 +26,8 @@ var (
 	flagRun      = flag.Bool("run", false, "Run a single benchmark iteration. Mutually exclusive with -bench")
 	flagBench    = flag.Bool("bench", false, "Run standard benchmark (multiple iterations). Mutually exclusive with -run")
 	flagFreq     = flag.Bool("freq", false, "Measure the frequency of the CPU")
+	flagOLTP     = flag.Bool("oltp", false, "Run a single iteration of the OLTP benchmark")
+	flagTPS      = flag.Int("tps", 100, "Target throughput of OLTP benchamrk")
 	flagDuration = flag.Int("duration", 60, "Duration in seconds of a single iteration")
 	flagNb       = flag.Int("nb", 10, "Number of iterations")
 	flagRes      = flag.String("res", "", "Optional result append file")
@@ -51,7 +53,9 @@ func main() {
 	var err error
 	switch {
 	case *flagRun:
-		err = runBench()
+		err = runBench(injectSaturation)
+	case *flagOLTP:
+		err = runBench(injectOLTP)
 	case *flagBench:
 		err = stdBench()
 	case *flagFreq:
@@ -70,8 +74,11 @@ func main() {
 	os.Exit(0)
 }
 
+// Injector is an injection policy
+type Injector func(chan WorkerOp, chan bool)
+
 // runBench runs a simple benchmark
-func runBench() error {
+func runBench(inject Injector) error {
 
 	log.Printf("CPU benchmark with %d threads and %d workers", *flagThreads, *flagWorkers)
 
@@ -110,18 +117,8 @@ func runBench() error {
 		stop <- true
 	})
 
-LOOP:
-	// Benchmark loop: we avoid checking for the timeout too often
-	for {
-		select {
-		case <-stop:
-			break LOOP
-		default:
-			for i := 0; i < *flagWorkers*16; i++ {
-				input <- OpStep
-			}
-		}
-	}
+	// Apply the injection
+	inject(input, stop)
 
 	// Signal the end of the benchmark to workers, and aggregate results
 	for range workers {
@@ -147,6 +144,78 @@ LOOP:
 	log.Print()
 
 	return nil
+}
+
+// injectSaturation injects traffic by saturating the input queue.
+// It is used for the standard benchmark.
+func injectSaturation(input chan WorkerOp, stop chan bool) {
+
+LOOP:
+	// Saturation benchmark loop: we avoid checking for the timeout too often
+	for {
+		select {
+		case <-stop:
+			break LOOP
+		default:
+			for i := 0; i < *flagWorkers*16; i++ {
+				input <- OpStep
+			}
+		}
+	}
+}
+
+// injectOLTP injects traffic by limiting the input throughput.
+// It is used for the OLTP benchmark.
+func injectOLTP(input chan WorkerOp, stop chan bool) {
+
+	// Calculate a suitable period and number of transactions per period
+	var period int
+	switch {
+	case *flagTPS < 10:
+		period = 1000
+	case *flagTPS < 100:
+		period = 100
+	case *flagTPS < 500:
+		period = 50
+	case *flagTPS < 1000:
+		period = 20
+	default:
+		period = 10
+	}
+	nbPeriods := 1000 / period
+	nbTrans := *flagTPS / nbPeriods
+
+	// Rounding errors need to be corrected, so the first period is adjusted with a bit more transactions
+	nbTransFirst := *flagTPS - nbTrans*nbPeriods
+	if nbTransFirst < 0 {
+		nbTransFirst = 0
+	}
+
+	log.Printf("Injection: %d transactions every %d ms for %d periods/s", nbTrans, period, nbPeriods)
+	log.Printf("Injection correction: %d", nbTransFirst)
+	ticker := time.Tick(time.Duration(period) * time.Millisecond)
+	iPeriod := 0
+
+LOOP:
+	// Inject nbTrans transactions for each period
+	for {
+		select {
+		case <-stop:
+			break LOOP
+		case <-ticker:
+			n := nbTrans
+			if iPeriod == 0 {
+				n += nbTransFirst
+			}
+			for i := 0; i < n; i++ {
+				input <- OpStep
+			}
+			iPeriod++
+			if iPeriod == nbPeriods {
+				iPeriod = 0
+			}
+		}
+	}
 }
 
 // stdBench runs multiple benchmarks (single-threaded and then multi-threaded)
