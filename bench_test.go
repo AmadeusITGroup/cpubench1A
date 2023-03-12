@@ -131,3 +131,8 @@ func BenchmarkAll(b *testing.B) {
 		}
 	}
 }
+
+func TestImage(t *testing.T) {
+	b := NewBenchImage()
+	b.Run()
+}
