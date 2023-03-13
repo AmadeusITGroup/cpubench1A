@@ -61,6 +61,8 @@ func BenchmarkSimulation(b *testing.B) {
 }
 
 func Benchmark8Queens(b *testing.B) {
+	var c chessboard
+	_ = c.display // Silence U1000 warning associated to debug code
 	x := NewBench8Queens()
 	for n := 0; n < b.N; n++ {
 		x.Run()

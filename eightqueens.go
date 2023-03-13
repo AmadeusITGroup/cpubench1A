@@ -48,7 +48,7 @@ func (cb *chessboard) setxylines(x, y int) {
 	}
 }
 
-// display is only used for debugging purposes
+// display is used to display a chessboard for debugging purposes
 func (cb *chessboard) display() {
 	var sb strings.Builder
 	for i := 0; i < 8; i++ {
