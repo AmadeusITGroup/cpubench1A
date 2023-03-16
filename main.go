@@ -276,7 +276,6 @@ func spawnBench(workers int, resfile string) error {
 		"-threads", strconv.Itoa(*flagThreads),
 		"-workers", strconv.Itoa(workers),
 		"-duration", strconv.Itoa(*flagDuration),
-		"-nb", strconv.Itoa(*flagNb),
 		"-res", resfile,
 	}
 
