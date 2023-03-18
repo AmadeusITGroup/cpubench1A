@@ -23,10 +23,11 @@ const Version = "3.1"
 var (
 	flagWorkers  = flag.Int("workers", -1, "Number of workers. Default is 4*threads")
 	flagThreads  = flag.Int("threads", -1, "Number of Go threads (i.e. GOMAXPROCS). Default is all OS processors")
-	flagRun      = flag.Bool("run", false, "Run a single benchmark iteration. Mutually exclusive with -bench")
-	flagBench    = flag.Bool("bench", false, "Run standard benchmark (multiple iterations). Mutually exclusive with -run")
+	flagRun      = flag.Bool("run", false, "Run a single benchmark iteration")
+	flagRunOLTP  = flag.Bool("runoltp", false, "Run a single iteration of the OLTP benchmark")
+	flagBench    = flag.Bool("bench", false, "Run standard benchmark (multiple iterations)")
 	flagFreq     = flag.Bool("freq", false, "Measure the frequency of the CPU")
-	flagOLTP     = flag.Bool("oltp", false, "Run a single iteration of the OLTP benchmark")
+	flagOLTP     = flag.Bool("oltp", false, "Run OLTP benchmark (multiple iterations)")
 	flagTPS      = flag.Int("tps", 100, "Target throughput of OLTP benchamrk")
 	flagDuration = flag.Int("duration", 60, "Duration in seconds of a single iteration")
 	flagNb       = flag.Int("nb", 10, "Number of iterations")
@@ -54,10 +55,12 @@ func main() {
 	switch {
 	case *flagRun:
 		err = runBench(injectSaturation)
-	case *flagOLTP:
+	case *flagRunOLTP:
 		err = runBench(injectOLTP)
 	case *flagBench:
 		err = stdBench()
+	case *flagOLTP:
+		err = oltpBench()
 	case *flagFreq:
 		err = measureFreq()
 	case *flagVersion:
@@ -150,12 +153,11 @@ func runBench(inject Injector) error {
 // It is used for the standard benchmark.
 func injectSaturation(input chan WorkerOp, stop chan bool) {
 
-LOOP:
 	// Saturation benchmark loop: we avoid checking for the timeout too often
 	for {
 		select {
 		case <-stop:
-			break LOOP
+			return
 		default:
 			for i := 0; i < *flagWorkers*16; i++ {
 				input <- OpStep
@@ -196,12 +198,11 @@ func injectOLTP(input chan WorkerOp, stop chan bool) {
 	ticker := time.Tick(time.Duration(period) * time.Millisecond)
 	iPeriod := 0
 
-LOOP:
 	// Inject nbTrans transactions for each period
 	for {
 		select {
 		case <-stop:
-			break LOOP
+			return
 		case <-ticker:
 			n := nbTrans
 			if iPeriod == 0 {
@@ -261,6 +262,52 @@ func stdBench() error {
 	return nil
 }
 
+// oltpBench runs multiple OLTP benchmark progressively increasing the throughput.
+// Purpose is to measure the CPU usage for a give throughput.
+func oltpBench() error {
+
+	// Display CPU information
+	log.Println("Version: ", Version)
+	log.Print()
+	if err := displayCPU(); err != nil {
+		return nil
+	}
+
+	log.Print("OLTP benchmark")
+	log.Print("==============")
+	log.Print()
+
+	// CPU usage is calculated from the last call to cpu.Percent.
+	// This is the initial call.
+	if _, err := cpu.Percent(0, false); err != nil {
+		return err
+	}
+
+	// We run a few more iterations to try to saturate the CPU
+	for i := 0; i < *flagNb+4; i++ {
+
+		if i == 0 {
+			// Used to measure CPU usage when nothing runs (zero throughput)
+			time.Sleep(time.Duration(*flagDuration) * time.Second)
+		} else {
+			// No temp file to fetch results for now
+			if err := spawnOLTP(i); err != nil {
+				return err
+			}
+		}
+
+		// This represents the average CPU usage percentage for the last iteration
+		p, err := cpu.Percent(0, false)
+		if err != nil {
+			return err
+		}
+		log.Printf("CPU USAGE: %.3f", p[0])
+		log.Print()
+	}
+
+	return nil
+}
+
 // spawnBench runs a benchmark as an external process
 func spawnBench(workers int, resfile string) error {
 
@@ -277,6 +324,35 @@ func spawnBench(workers int, resfile string) error {
 		"-workers", strconv.Itoa(workers),
 		"-duration", strconv.Itoa(*flagDuration),
 		"-res", resfile,
+	}
+
+	// Execute command in blocking mode
+	cmd := exec.Command(executable, opt...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// spawnOltp runs an OLTP benchmark as an external process
+func spawnOLTP(it int) error {
+
+	// Get executable path
+	executable, err := os.Executable()
+	if err != nil {
+		return nil
+	}
+
+	// Build parameters
+	opt := []string{
+		"-runoltp",
+		"-tps", strconv.Itoa(it * (*flagTPS) / (*flagNb)),
+		"-threads", strconv.Itoa(*flagThreads),
+		"-workers", strconv.Itoa(*flagWorkers),
+		"-duration", strconv.Itoa(*flagDuration),
 	}
 
 	// Execute command in blocking mode
@@ -317,9 +393,11 @@ func displayCPU() error {
 	log.Printf("Cores: %d", nc)
 	log.Printf("Threads: %d", nt)
 
-	// Fetch NUMA topology
-	numa := map[int]int{}
-	if files, err := filepath.Glob("/sys/devices/system/node/node[0-9]*/cpu[0-9]*"); err == nil {
+	// NUMA topology retrieval only works on Linux
+	if files, err := filepath.Glob("/sys/devices/system/node/node[0-9]*/cpu[0-9]*"); err == nil && len(files) > 0 {
+
+		// Fetch NUMA topology
+		numa := map[int]int{}
 		for _, f := range files {
 			t := strings.Split(strings.TrimPrefix(f, "/sys/devices/system/node/"), "/")
 			if len(t) > 1 {
@@ -333,18 +411,18 @@ func displayCPU() error {
 				numa[c] = n
 			}
 		}
-	}
 
-	// Display NUMA topology
-	for _, c := range cpuinfo {
-		n, ok := numa[int(c.CPU)]
-		if !ok {
-			n = -1
+		// Display NUMA topology
+		for _, c := range cpuinfo {
+			n, ok := numa[int(c.CPU)]
+			if !ok {
+				n = -1
+			}
+			log.Printf("CPU:%3d Socket:%3s CoreId:%3s Node:%3d", c.CPU, c.PhysicalID, c.CoreID, n)
 		}
-		log.Printf("CPU:%3d Socket:%3s CoreId:%3s Node:%3d", c.CPU, c.PhysicalID, c.CoreID, n)
 	}
-	log.Print()
 
+	log.Print()
 	return nil
 }
 
@@ -366,12 +444,12 @@ func measureFreq() error {
 	// The loop contains 1024 dependent instructions (1 cycle per instruction)
 	// plus a test/jump (resulting in 1 or 2 additional cycles)
 	log.Println("Frequency:", float64(NFREQ)/1024.0*ASMLoopCycles/dur/1.0e9, "GHz")
-
 	return nil
 }
 
 // displayVersion just prints the program version
 func displayVersion() error {
+
 	fmt.Println("Version:", Version)
 	return nil
 }
