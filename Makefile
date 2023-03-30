@@ -9,7 +9,7 @@ test:
 
 delivery:
 	go clean
-	CGO_ENABLED=0 go build
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build
 	tar cvfz cpubench1a-x86_64-$(VERSION).tar.gz cpubench1a
 	rm cpubench1a
 	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build
