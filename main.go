@@ -17,7 +17,7 @@ import (
 )
 
 // Version of the program
-const Version = "3.1"
+const Version = "4.0"
 
 // Definition of the command line flags
 var (

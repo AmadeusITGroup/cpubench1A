@@ -2,7 +2,7 @@
 
 ## Purpose
 
-cpubench1a is a CPU benchmark whose purpose is to measure the global computing power of a Linux machine. It is used at [Amadeus](https://www.amadeus.com) to qualify bare-metal and virtual boxes, and compare generations of machines or VMs. It is delivered as static self-contained Go binaries for x86_64 and Aarch64 CPU architectures.
+cpubench1a is a CPU benchmark whose purpose is to measure the global computing power of a Linux machine. It can also run on a MacOS box. It is used at [Amadeus](https://www.amadeus.com) to qualify bare-metal and virtual boxes, and compare generations of machines or VMs. It is delivered as static self-contained Go binaries for x86_64 and Aarch64 CPU architectures.
 
 It runs a number of throughput oriented tests to establish:
 
@@ -36,19 +36,25 @@ The command line parameters are:
 ```
 Usage of ./cpubench1a:
   -bench
-    	Run standard benchmark (multiple iterations). Mutually exclusive with -run
+    	Run standard benchmark (multiple iterations)
   -duration int
     	Duration in seconds of a single iteration (default 60)
   -freq
     	Measure the frequency of the CPU
   -nb int
     	Number of iterations (default 10)
+  -oltp
+    	Run OLTP benchmark (multiple iterations)
   -res string
     	Optional result append file
   -run
-    	Run a single benchmark iteration. Mutually exclusive with -bench
+    	Run a single benchmark iteration
+  -runoltp
+    	Run a single iteration of the OLTP benchmark
   -threads int
     	Number of Go threads (i.e. GOMAXPROCS). Default is all OS processors (default -1)
+  -tps int
+    	Target throughput of OLTP benchamrk (default 100)
   -version
     	Display program version and exit
   -workers int
@@ -89,27 +95,27 @@ To check the benchmark is relevant (and the execution time of one algorithm does
 
 ```
 $ go test -bench=. -benchmem
-goos: linux
-goarch: amd64
+goos: darwin
+goarch: arm64
 pkg: cpubench1a
-cpu: Intel(R) Core(TM) i7-8850H CPU @ 2.60GHz
-BenchmarkCompression-12    	    2593	    439639 ns/op	   45555 B/op	      17 allocs/op
-BenchmarkAwk1-12           	    3754	    302032 ns/op	   37480 B/op	     405 allocs/op
-BenchmarkAwk2-12           	    4953	    294598 ns/op	  114379 B/op	     910 allocs/op
-BenchmarkJson-12           	    1983	    639540 ns/op	    8675 B/op	      89 allocs/op
-BenchmarkBtree1-12         	    6598	    179429 ns/op	    9786 B/op	       4 allocs/op
-BenchmarkBtree2-12         	    3769	    292439 ns/op	   13121 B/op	       4 allocs/op
-BenchmarkSort-12           	    2192	    549793 ns/op	     176 B/op	       4 allocs/op
-BenchmarkSimulation-12     	    1562	    768235 ns/op	   28989 B/op	    1218 allocs/op
-Benchmark8Queens-12        	    2316	    512803 ns/op	       0 B/op	       0 allocs/op
-BenchmarkMemory-12         	    3652	    285971 ns/op	    6587 B/op	       0 allocs/op
-BenchmarkImage-12          	    1767	    669635 ns/op	     553 B/op	       9 allocs/op
-BenchmarkCrypto-12         	    2788	    424237 ns/op	    1379 B/op	      11 allocs/op
-BenchmarkPearls-12         	    3217	    353276 ns/op	       0 B/op	       0 allocs/op
-BenchmarkGraph-12          	    2308	    468617 ns/op	    2117 B/op	      44 allocs/op
-BenchmarkAll-12            	     186	   6212280 ns/op	  403179 B/op	    2754 allocs/op
+BenchmarkCompression-8   	    3525	    339068 ns/op	   45414 B/op	      17 allocs/op
+BenchmarkAwk1-8          	    6691	    175914 ns/op	   48282 B/op	     409 allocs/op
+BenchmarkAwk2-8          	    8762	    134503 ns/op	  120662 B/op	     934 allocs/op
+BenchmarkJson-8          	    3344	    354207 ns/op	    8435 B/op	      89 allocs/op
+BenchmarkBtree1-8        	    9519	    125006 ns/op	    2343 B/op	      20 allocs/op
+BenchmarkBtree2-8        	    7172	    164623 ns/op	   13130 B/op	      21 allocs/op
+BenchmarkSort-8          	    3502	    335881 ns/op	     137 B/op	       4 allocs/op
+BenchmarkSimulation-8    	    2984	    398033 ns/op	   28973 B/op	    1218 allocs/op
+Benchmark8Queens-8       	    4574	    258772 ns/op	       0 B/op	       0 allocs/op
+BenchmarkMemory-8        	    6397	    162632 ns/op	    3746 B/op	       0 allocs/op
+BenchmarkImage-8         	    3300	    354528 ns/op	     436 B/op	       8 allocs/op
+BenchmarkCrypto-8        	    3214	    372153 ns/op	    1376 B/op	      11 allocs/op
+BenchmarkPearls-8        	    5914	    200190 ns/op	       0 B/op	       0 allocs/op
+BenchmarkGraph-8         	    4516	    263980 ns/op	    2114 B/op	      44 allocs/op
+BenchmarkLogging-8       	   10000	    117413 ns/op	    1947 B/op	     109 allocs/op
+BenchmarkAll-8           	     290	   4064857 ns/op	  363326 B/op	    2910 allocs/op
 PASS
-ok  	cpubench1a	19.733s
+ok  	cpubench1a	21.351s
 ```
 
 Each individual algorithm should represent only a fraction of the CPU consumption of the total (BenchmarkAll).
@@ -125,21 +131,25 @@ Each test iteration runs for a given duration (typically 1 minute). The score of
 A normal benchmark run involves 10 test iterations in single-threaded mode, and 10 test iterations in multi-threaded mode. Statistics about the single-threaded and multi-threaded runs are given at the end.The resulting score is defined as the **maximum** reported throughput in each category. Considering the maximum aims to counter the negative effect of CPU throttling, variable frequencies and noisy neighbours on some environments.
 
 ```
-2021/05/04 21:32:08 Results
-2021/05/04 21:32:08 =======
-2021/05/04 21:32:08 
-2021/05/04 21:32:08 Single thread
-2021/05/04 21:32:08     Minimum: 203.225590
-2021/05/04 21:32:08     Average: 203.990533
-2021/05/04 21:32:08      Median: 204.007989
-2021/05/04 21:32:08     Maximum: 204.833596
-2021/05/04 21:32:08 
-2021/05/04 21:32:08 Multi-thread
-2021/05/04 21:32:08     Minimum: 976.563635
-2021/05/04 21:32:08     Average: 1060.236858
-2021/05/04 21:32:08      Median: 1039.998520
-2021/05/04 21:32:08     Maximum: 1156.083724
-2021/05/04 21:32:08 
+2023/03/30 19:32:09 Results
+2023/03/30 19:32:09 =======
+2023/03/30 19:32:09 
+2023/03/30 19:32:09 Version: 4.0
+2023/03/30 19:32:09 
+2023/03/30 19:32:09 Single thread
+2023/03/30 19:32:09     Minimum: 246.161850
+2023/03/30 19:32:09     Average: 246.161850
+2023/03/30 19:32:09      Median: 246.161850
+2023/03/30 19:32:09    Geo mean: 246.161850
+2023/03/30 19:32:09     Maximum: 246.161850
+2023/03/30 19:32:09 
+2023/03/30 19:32:09 Multi-thread
+2023/03/30 19:32:09     Minimum: 1471.262467
+2023/03/30 19:32:09     Average: 1471.262467
+2023/03/30 19:32:09      Median: 1471.262467
+2023/03/30 19:32:09    Geo mean: 1471.262467
+2023/03/30 19:32:09     Maximum: 1471.262467
+2023/03/30 19:32:09 
 ```
 
 ## Rationale: avoiding pitfalls
@@ -193,6 +203,16 @@ It should execute whithin a few seconds.
 The frequency is measured by counting the number of CPU cycles of a pre-defined loop, so it is independent from any system information exposed by the OS or the hypervisor. It has the benefit to measure a meaningful value, even if the hypervisor is lying to the guest OS.
 
 The command can be launched once (with no other activity on the machine) to measure the maximum frequency for one core. It can be launched multiple times in parallel to measure the maximum frequency when multiple cores are active (which can be different, due to CPU power management features).
+
+# OLTP benchmark
+
+The support for an OLTP benchmark has been added. It applies the same transactions than the normal benchmark at given throughput, and measure the CPU consumption. The idea is to increase the throughput in a progressive way to check the evolution of the CPU usage. It can be launched in the following way:
+
+```
+$ ./cpubench1a -oltp -nb 20 -tps 5000
+```
+
+This will run the OLTP benchmark with a throughput progressing from 0 to 5000 tps, with increment of 5000/20 = 250 tps every 60 seconds (default duration parameter). It is generally useful to launch the normal benchmark to evaluate the maximum throughput. Then, this throughput can be passed as a parameter to the OLTP benchmark. The resulting throughput and CPU consumption are in the output log. The CPU consumption is expressed as a percentage of the general CPU capacity of the machine.
 
 ## Versioning
 
