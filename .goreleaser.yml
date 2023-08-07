@@ -1,0 +1,21 @@
+before:
+builds:
+  - env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w
+    flags:
+      - -trimpath
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+archives:
+  - format: binary
+checksum:
+  name_template: "checksums.txt"
+release:
+  prerelease: auto
