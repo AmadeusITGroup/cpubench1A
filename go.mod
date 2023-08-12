@@ -6,7 +6,7 @@ require (
 	github.com/benhoyt/goawk v1.24.0
 	github.com/shirou/gopsutil/v3 v3.23.7
 	github.com/tidwall/btree v1.6.0
-	github.com/tidwall/gjson v1.14.4
+	github.com/tidwall/gjson v1.16.0
 )
 
 require (
