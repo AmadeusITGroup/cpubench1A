@@ -1,0 +1,34 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "*"
+
+jobs:
+  binaries:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3.5.2
+        with:
+          token: ${{ secrets.API_GITHUB_TOKEN }}
+
+      - name: Fetch Go version
+        run: |
+          GO_VERSION=$(perl -ne 'print "$1\n" if /FROM golang:([0-9.]+)/' Dockerfile | head -n1)
+          [ -n "$GO_VERSION" ] || exit 1
+          echo "go_version=$GO_VERSION" >> $GITHUB_ENV
+      - name: Setup Go environment
+        uses: actions/setup-go@v4.0.1
+        with:
+          go-version: "${{ env.go_version }}"
+
+      - name: Binaries Release
+        uses: goreleaser/goreleaser-action@v4.2.0
+        with:
+          version: ~> 1.16.2
+          args: release --rm-dist
+        env:
+          GITHUB_TOKEN: ${{ secrets.API_GITHUB_TOKEN }}
