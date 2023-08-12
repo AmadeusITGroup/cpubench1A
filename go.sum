@@ -1,5 +1,5 @@
-github.com/benhoyt/goawk v1.21.0 h1:GASuhJXHMFZ/2TJBPh+2Ah3kclVGNvGjt+uh3ajMdLk=
-github.com/benhoyt/goawk v1.21.0/go.mod h1:UG1Ld6CjkkHhoyQmErQGSTwmavsTqFnCDYsLSJbovqU=
+github.com/benhoyt/goawk v1.24.0 h1:+/Wdr0W9v8zjXYyr09k7cO8OvJgWcD6Ejqr3xdWEFzw=
+github.com/benhoyt/goawk v1.24.0/go.mod h1:UG1Ld6CjkkHhoyQmErQGSTwmavsTqFnCDYsLSJbovqU=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
