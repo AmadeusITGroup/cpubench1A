@@ -229,19 +229,28 @@ func stdBench() error {
 		return nil
 	}
 
-	// Create a temporary file storing the results
-	tmp, err := os.CreateTemp("", "cpubench1a-*")
-	if err != nil {
-		return err
+	// Create a file storing the results
+	var resFile *os.File
+	var err error
+	if *flagRes != "" {
+		resFile, err = os.Create(*flagRes)
+		if err != nil {
+			return err
+		}
+	} else {
+		resFile, err = os.CreateTemp("", "cpubench1a-*")
+		if err != nil {
+			return err
+		}
+		defer os.Remove(resFile.Name())
 	}
-	defer os.Remove(tmp.Name())
 
 	// Run multiple benchmarks in sequence
 	log.Print("Single threaded performance")
 	log.Print("===========================")
 	log.Print()
 	for i := 0; i < *flagNb; i++ {
-		if err := spawnBench(1, tmp.Name()); err != nil {
+		if err := spawnBench(1, resFile.Name()); err != nil {
 			return err
 		}
 	}
@@ -251,14 +260,14 @@ func stdBench() error {
 	log.Print("==========================")
 	log.Print()
 	for i := 0; i < *flagNb; i++ {
-		if err := spawnBench(*flagWorkers, tmp.Name()); err != nil {
+		if err := spawnBench(*flagWorkers, resFile.Name()); err != nil {
 			return err
 		}
 	}
 
 	// Display statistics from the temporary file
-	DisplayResult(tmp, *flagWorkers)
-	tmp.Close()
+	DisplayResult(resFile, *flagWorkers)
+	resFile.Close()
 	return nil
 }
 
