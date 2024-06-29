@@ -13,13 +13,13 @@ jobs:
     steps:
       - name: Checkout with token
         if: github.event_name != 'pull_request'
-        uses: actions/checkout@v3.5.3
+        uses: actions/checkout@v4.1.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Checkout without token
         if: github.event_name == 'pull_request'
-        uses: actions/checkout@v3.5.3
+        uses: actions/checkout@v4.1.1
 
       - name: Fetch Go version
         run: |
@@ -40,7 +40,7 @@ jobs:
 
       - name: Version
         if: github.event_name != 'pull_request'
-        uses: cycjimmy/semantic-release-action@v3.4.2
+        uses: cycjimmy/semantic-release-action@v4.0.0
         with:
           semantic_version: 17.4
         env:
