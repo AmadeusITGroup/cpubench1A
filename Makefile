@@ -10,10 +10,13 @@ test:
 delivery:
 	go clean
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build
-	tar cvfz cpubench1a-x86_64-$(VERSION).tar.gz cpubench1a
+	tar cvfz cpubench1a-linux-x86_64-$(VERSION).tar.gz cpubench1a
 	rm cpubench1a
 	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build
-	tar cvfz cpubench1a-Aarch64-$(VERSION).tar.gz cpubench1a
+	tar cvfz cpubench1a-linux-Aarch64-$(VERSION).tar.gz cpubench1a
+	rm cpubench1a
+	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build
+	tar cvfz cpubench1a-darwin-Aarch64-$(VERSION).tar.gz cpubench1a
 	rm cpubench1a
 
 version:
