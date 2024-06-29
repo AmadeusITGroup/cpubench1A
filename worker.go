@@ -79,6 +79,7 @@ func (w *Worker) Init() {
 		NewBenchPearls(),
 		NewBenchGraph(),
 		NewBenchLogging(),
+		NewBenchHaversine(),
 	}
 	w.output <- 0
 }

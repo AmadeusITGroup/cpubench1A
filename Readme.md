@@ -87,7 +87,8 @@ The principle is very similar to SPECint or Coremark integer benchmarks. It is b
 - basic cryptography exercising 3DES/CTR algorithms (obsolete, but not hardware accelerated)
 - solving Dijkstra's pearls problem
 - top-k route exploring in small graphs
-- formatted logging with concealment and repetition detection 
+- formatted logging with concealment and repetition detection
+- haversine calculations triggered by traveling salesman problem
 
 These algorithms are not specifically representative of a given Amadeus application or functional transaction. Compression/decompression, encoding/decoding, crypto, data structures management, sorting small datasets, buffer building from scattered memory accesses, logging are typical of back-end software though. The code mostly uses integers, with only few floating point operations. One difference with other benchmarks is we do not really care about the absolute throughput of each individual algorithm, but rather about the transactional throughput. Each transaction (5-10 ms) is defined as a sequence involving all the algorithms, each of them running on a small memory working set.
 
@@ -98,24 +99,25 @@ $ go test -bench=. -benchmem
 goos: darwin
 goarch: arm64
 pkg: cpubench1a
-BenchmarkCompression-8   	    3525	    339068 ns/op	   45414 B/op	      17 allocs/op
-BenchmarkAwk1-8          	    6691	    175914 ns/op	   48282 B/op	     409 allocs/op
-BenchmarkAwk2-8          	    8762	    134503 ns/op	  120662 B/op	     934 allocs/op
-BenchmarkJson-8          	    3344	    354207 ns/op	    8435 B/op	      89 allocs/op
-BenchmarkBtree1-8        	    9519	    125006 ns/op	    2343 B/op	      20 allocs/op
-BenchmarkBtree2-8        	    7172	    164623 ns/op	   13130 B/op	      21 allocs/op
-BenchmarkSort-8          	    3502	    335881 ns/op	     137 B/op	       4 allocs/op
-BenchmarkSimulation-8    	    2984	    398033 ns/op	   28973 B/op	    1218 allocs/op
-Benchmark8Queens-8       	    4574	    258772 ns/op	       0 B/op	       0 allocs/op
-BenchmarkMemory-8        	    6397	    162632 ns/op	    3746 B/op	       0 allocs/op
-BenchmarkImage-8         	    3300	    354528 ns/op	     436 B/op	       8 allocs/op
-BenchmarkCrypto-8        	    3214	    372153 ns/op	    1376 B/op	      11 allocs/op
-BenchmarkPearls-8        	    5914	    200190 ns/op	       0 B/op	       0 allocs/op
-BenchmarkGraph-8         	    4516	    263980 ns/op	    2114 B/op	      44 allocs/op
-BenchmarkLogging-8       	   10000	    117413 ns/op	    1947 B/op	     109 allocs/op
-BenchmarkAll-8           	     290	   4064857 ns/op	  363326 B/op	    2910 allocs/op
+BenchmarkCompression-8   	    3160	    353997 ns/op	   45447 B/op	      17 allocs/op
+BenchmarkAwk1-8          	    7567	    152595 ns/op	   42688 B/op	     410 allocs/op
+BenchmarkAwk2-8          	    8535	    134261 ns/op	  120891 B/op	     938 allocs/op
+BenchmarkJson-8          	    3544	    339132 ns/op	    8432 B/op	      89 allocs/op
+BenchmarkBtree1-8        	    9926	    119793 ns/op	    2343 B/op	      20 allocs/op
+BenchmarkBtree2-8        	    7149	    168539 ns/op	   13515 B/op	      21 allocs/op
+BenchmarkSort-8          	    3478	    339621 ns/op	     137 B/op	       4 allocs/op
+BenchmarkSimulation-8    	    3066	    382546 ns/op	   28981 B/op	    1218 allocs/op
+Benchmark8Queens-8       	    4538	    258423 ns/op	       0 B/op	       0 allocs/op
+BenchmarkMemory-8        	    6474	    164683 ns/op	    3701 B/op	       0 allocs/op
+BenchmarkImage-8         	    3254	    352136 ns/op	     581 B/op	      11 allocs/op
+BenchmarkCrypto-8        	    3204	    383037 ns/op	    1376 B/op	      11 allocs/op
+BenchmarkPearls-8        	    5596	    208900 ns/op	       0 B/op	       0 allocs/op
+BenchmarkGraph-8         	    4419	    266269 ns/op	    2115 B/op	      44 allocs/op
+BenchmarkLogging-8       	   10000	    116239 ns/op	    1958 B/op	     109 allocs/op
+BenchmarkHaversine-8     	    3673	    326621 ns/op	     136 B/op	       9 allocs/op
+BenchmarkAll-8           	     272	   4371689 ns/op	  364742 B/op	    2928 allocs/op
 PASS
-ok  	cpubench1a	21.351s
+ok  	cpubench1a	20.834s
 ```
 
 Each individual algorithm should represent only a fraction of the CPU consumption of the total (BenchmarkAll).

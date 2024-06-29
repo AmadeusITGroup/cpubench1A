@@ -111,6 +111,13 @@ func BenchmarkLogging(b *testing.B) {
 	}
 }
 
+func BenchmarkHaversine(b *testing.B) {
+	x := NewBenchHaversine()
+	for n := 0; n < b.N; n++ {
+		x.Run()
+	}
+}
+
 func BenchmarkAll(b *testing.B) {
 	benchmarks := []Benchmark{
 		NewBenchCompression(),
@@ -126,6 +133,7 @@ func BenchmarkAll(b *testing.B) {
 		NewBenchPearls(),
 		NewBenchGraph(),
 		NewBenchLogging(),
+		NewBenchHaversine(),
 	}
 	for n := 0; n < b.N; n++ {
 		for _, x := range benchmarks {
