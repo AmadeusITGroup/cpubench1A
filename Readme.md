@@ -194,15 +194,16 @@ We have a CPU bound workload running on 2000 VM of type A. How many VM of type B
 
 ## CPU frequency measurement
 
-This tool also supports a CPU frequency measuremnet mechanism. It can be launched using: 
+This tool also supports a CPU frequency measurement mechanism. It can be launched using: 
 
 ```
 $ ./cpubench1a -freq
 ```
 
-It should execute whithin a few seconds.
+It should execute within a few seconds.
 
-The frequency is measured by counting the number of CPU cycles of a pre-defined loop, so it is independent from any system information exposed by the OS or the hypervisor. It has the benefit to measure a meaningful value, even if the hypervisor is lying to the guest OS.
+The frequency is measured by counting the number of CPU cycles of a pre-defined loop, so it is independent from any system information exposed by the OS or the hypervisor. It has the benefit to measure a meaningful value, even if the hypervisor is lying to the guest OS (which can happen,
+we have seen it ...)
 
 The command can be launched once (with no other activity on the machine) to measure the maximum frequency for one core. It can be launched multiple times in parallel to measure the maximum frequency when multiple cores are active (which can be different, due to CPU power management features).
 
