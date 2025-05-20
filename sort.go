@@ -4,19 +4,23 @@ import (
 	"fmt"
 	"hash/maphash"
 	"log"
-	"math/rand"
+	"math/rand/v2"
 	"sort"
 )
 
 // Arbitrary seed
-const SORT_SEED = 1234
-const SORT_N = 1024
+const (
+	SORT_SEED1 = 1234
+	SORT_SEED2 = 4321
+	SORT_N     = 1024
+)
 
 // BenchSort is a sorting benchmark using the standard library facilities.
 // Items
 type BenchSort struct {
 	array []SortItem
 	r     *rand.Rand
+	pcg   *rand.PCG
 	h     uint64
 	hseed maphash.Seed
 }
@@ -55,14 +59,16 @@ func (a ById) Less(i, j int) bool { return a[i].id < a[j].id }
 func NewBenchSort() *BenchSort {
 
 	// Fill the structures with pseudo-random (but seeded) data
-	r := rand.New(rand.NewSource(SORT_SEED))
+	pcg := rand.NewPCG(SORT_SEED1, SORT_SEED2)
+	r := rand.New(pcg)
+	chacha := rand.NewChaCha8([32]byte{})
 	items := make([]SortItem, SORT_N)
 	for i := 0; i < len(items); i++ {
 		x := &(items[i])
-		x.firstname = fmt.Sprintf("%016x", r.Int63())
-		x.lastname = fmt.Sprintf("%016X", r.Int63())
+		x.firstname = fmt.Sprintf("%016x", r.Int64())
+		x.lastname = fmt.Sprintf("%016X", r.Int64())
 		x.id = i
-		if n, err := r.Read(x.blob[:]); err != nil || n != 128 {
+		if n, err := chacha.Read(x.blob[:]); err != nil || n != 128 {
 			log.Fatal("Wrond rand read")
 		}
 	}
@@ -70,6 +76,7 @@ func NewBenchSort() *BenchSort {
 	res := &BenchSort{
 		array: items,
 		r:     r,
+		pcg:   pcg,
 		hseed: maphash.MakeSeed(),
 	}
 
@@ -82,7 +89,7 @@ func NewBenchSort() *BenchSort {
 func (b *BenchSort) Run() {
 
 	// Shuffle the slice of records
-	b.r.Seed(SORT_SEED)
+	b.pcg.Seed(SORT_SEED1, SORT_SEED2)
 	b.r.Shuffle(SORT_N, func(i, j int) {
 		b.array[i], b.array[j] = b.array[j], b.array[i]
 	})

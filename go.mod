@@ -1,6 +1,6 @@
 module cpubench1a
 
-go 1.22
+go 1.23
 
 require (
 	github.com/benhoyt/goawk v1.27.0
