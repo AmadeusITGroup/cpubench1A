@@ -229,6 +229,7 @@ Because the purpose of this software is to compare the CPU efficiency of various
 | 3.1     | 1.18          |
 | 4.0     | 1.20.2        |
 | 5.0     | 1.22.4        |
+| dev     | 1.25.2        |
 
 The scores measured with different versions of this benchmark MUST NOT be compared.
 
