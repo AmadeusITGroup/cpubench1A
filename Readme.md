@@ -83,11 +83,13 @@ On Windows:
 
 By default, it runs for a bit more than 20 minutes (10 iterations of 60 seconds each for single and multiple threads). The default number of threads is the number of OS processors, and the default number of workers is 4 times the number of threads.
 
-Before launching the tests, the program displays some information about the CPU extracted from the operating system and the NUMA topology of the system (if available on Linux).
+Before launching the tests, the program displays some information about the CPU extracted from the operating system and the NUMA topology of the system (if available).
 
 ### Platform-Specific Notes
 
-**Windows**: NUMA topology information is not displayed on Windows. All other benchmark features work identically across platforms. The benchmark results are comparable across operating systems when run on the same hardware.
+**Windows**: NUMA topology detection uses Windows API (`GetNumaHighestNodeNumber` and `GetLogicalProcessorInformationEx`). All benchmark features work identically across platforms. The benchmark results are comparable across operating systems when run on the same hardware.
+
+**Linux/Unix**: NUMA topology detection reads from `/sys/devices/system/node` filesystem.
 
 ## Principle
 
