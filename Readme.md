@@ -2,34 +2,42 @@
 
 ## Purpose
 
-cpubench1a is a CPU benchmark whose purpose is to measure the global computing power of a Linux machine. It can also run on a MacOS box. It is used at [Amadeus](https://www.amadeus.com) to qualify bare-metal and virtual boxes, and compare generations of machines or VMs. It is delivered as static self-contained Go binaries for x86_64 and Aarch64 CPU architectures.
+cpubench1a is a CPU benchmark whose purpose is to measure the global computing power of a machine. It runs on Linux, macOS, and Windows. It is used at [Amadeus](https://www.amadeus.com) to qualify bare-metal and virtual boxes, and compare generations of machines or VMs. It is delivered as static self-contained Go binaries for x86_64 and Aarch64 CPU architectures.
 
 It runs a number of throughput oriented tests to establish:
 
  - an estimation of the throughput a single OS processor can sustain (i.e. a single-threaded benchmark)
  - an estimation of the throughput all the OS processors can sustain (i.e. a multi-threaded benchmark)
 
-An OS processor is defined as an entry in the /proc/cpuinfo file. Depending on the hardware, hypervisor, and operating system configuration, it can correspond to a full CPU core, a vCPU, or just a hardware thread.
+An OS processor is defined as a logical processor reported by the operating system (e.g., an entry in /proc/cpuinfo on Linux). Depending on the hardware, hypervisor, and operating system configuration, it can correspond to a full CPU core, a vCPU, or just a hardware thread.
 
 ## Build and launch
 
 The easiest way to run this tool is to directly download the binaries from github (see the releases). If this is not possible or acceptable, it is easy enough to build it, provided the correct version of the Go compiler is installed.
 
-It is recommended to build the binaries on a reference machine (eventually different from the machines to be compared by the benchmark). The idea is to use the same binaries on all the machines part of the benchmark to make sure the same exact code is run everywhere. We suggest to use any Linux x86_64 box supporting the Go toolchain (no specific constraint here), and build the ARM binary using cross compilation.
+It is recommended to build the binaries on a reference machine (eventually different from the machines to be compared by the benchmark). The idea is to use the same binaries on all the machines part of the benchmark to make sure the same exact code is run everywhere. We suggest to use any x86_64 box supporting the Go toolchain (no specific constraint here), and build other architectures using cross compilation.
 
-To build from source (for x86_64, from a x86_64 box):
+To build from source (for x86_64, native build):
 
 ```
 CGO_ENABLED=0 go build
 ```
 
+Note: CGO is not required. The benchmark uses pure Go with platform-specific syscalls for Windows NUMA detection.
+
 To build from source (for Aarch64, from a x86_64 box):
 
 ```
-CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build
+GOOS=linux GOARCH=arm64 go build
 ```
 
-The resulting binary is statically linked and not dependent on the Linux distribution or version (except a minimal 2.6.23 kernel version). In order to run the benchmark, the binary can be directly copied to the target machines, and run there. 
+To build for Windows (from any platform):
+
+```
+GOOS=windows GOARCH=amd64 go build -o cpubench1a.exe
+```
+
+The resulting binaries are statically linked and not dependent on the OS distribution or version (Linux requires a minimal 2.6.23 kernel version). In order to run the benchmark, the binary can be directly copied to the target machines, and run there. 
 
 The command line parameters are:
 
@@ -67,9 +75,19 @@ The canonical way to launch the benchmark is just:
 $ ./cpubench1a -bench
 ```
 
+On Windows:
+
+```
+> cpubench1a.exe -bench
+```
+
 By default, it runs for a bit more than 20 minutes (10 iterations of 60 seconds each for single and multiple threads). The default number of threads is the number of OS processors, and the default number of workers is 4 times the number of threads.
 
-Before launching the tests, the program displays some information about the CPU extracted from /proc/cpuinfo and the NUMA topology of the system (if available).
+Before launching the tests, the program displays some information about the CPU extracted from the operating system and the NUMA topology of the system (if available on Linux).
+
+### Platform-Specific Notes
+
+**Windows**: NUMA topology information is not displayed on Windows. All other benchmark features work identically across platforms. The benchmark results are comparable across operating systems when run on the same hardware.
 
 ## Principle
 
@@ -164,7 +182,7 @@ We have decided to write our own benchmark to avoid the following issues:
 
 - we wanted to mitigate the risk of having a vendor optimizing its offer to shine in a well-known industry benchmark.
 
-The benchmark is therefore coded in pure Go, compiled with a specific Go version on a given reference machine, and linked statically. The binaries are provided for Intel/AMD and ARM (64 bits). They are copied to the machine we want to test, so we are sure the same code is executed whatever the Linux distribution/version/flavor. At the moment, the benchmark does only run under Linux, and no other operating system.
+The benchmark is therefore coded in pure Go, compiled with a specific Go version on a given reference machine, and linked statically. The binaries are provided for Intel/AMD and ARM (64 bits) on Linux, macOS, and Windows. They are copied to the machine we want to test, so we are sure the same code is executed whatever the OS distribution/version/flavor.
 
 Limiting all memory allocations while testing real-world code is difficult. Each algorithm generates some memory allocations, and therefore some garbage collection activity. We have just ensured that the garbage collection cost is low compared to the runtime cost of the algorithms. Furthermore, each test iteration runs in a separate process, so that the memory accumulated by a given iteration does not degrade the garbage collection of the next iteration.
 
