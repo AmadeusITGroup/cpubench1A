@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"runtime"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/shirou/gopsutil/v3/cpu"
@@ -384,7 +385,12 @@ func displayCPU() error {
 		return err
 	}
 
-	log.Printf("CPU: %s / %s", cpuinfo[0].VendorID, cpuinfo[0].ModelName)
+	var s strings.Builder
+	if cpuinfo[0].VendorID != "" {
+		fmt.Fprintf(&s, "%s / ", cpuinfo[0].VendorID)
+	}
+	fmt.Fprint(&s, cpuinfo[0].ModelName)
+	log.Printf("CPU: %s", s.String())
 	log.Printf("Max freq: %.2f mhz (as reported by OS)", cpuinfo[0].Mhz)
 
 	// The core/thread count is wrong on some architectures
@@ -401,11 +407,7 @@ func displayCPU() error {
 	log.Printf("Threads: %d", nt)
 
 	// Display NUMA topology using platform-specific detection
-	numaInfo := GetNumaTopologyString()
-	if numaInfo != "" {
-		log.Print(numaInfo)
-	}
-
+	DisplayNumaTopology(cpuinfo)
 	log.Print()
 	return nil
 }

@@ -3,117 +3,43 @@
 package main
 
 import (
-	"fmt"
-	"os"
+	"log"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/shirou/gopsutil/v3/cpu"
 )
 
-// NumaNodeInfo represents NUMA node information (cross-platform)
-type NumaNodeInfo struct {
-	NodeNumber uint32
-	CPUCount   int
-}
+// DisplayNumaTopology displays the NUMA CPU topology
+func DisplayNumaTopology(cpuinfo []cpu.InfoStat) {
 
-// GetNumaTopology retrieves NUMA topology information for Unix-like systems
-func GetNumaTopology() ([]NumaNodeInfo, error) {
-	// This uses the existing /sys filesystem approach
-	return getNumaTopologyFromSys()
-}
+	// NUMA topology retrieval only works on Linux
+	if files, err := filepath.Glob("/sys/devices/system/node/node[0-9]*/cpu[0-9]*"); err == nil && len(files) > 0 {
 
-// getNumaTopologyFromSys reads NUMA topology from /sys filesystem (Linux)
-func getNumaTopologyFromSys() ([]NumaNodeInfo, error) {
-	numaPath := "/sys/devices/system/node"
-	
-	entries, err := os.ReadDir(numaPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read NUMA directory: %v", err)
-	}
-
-	var nodes []NumaNodeInfo
-	for _, entry := range entries {
-		if !entry.IsDir() {
-			continue
-		}
-
-		name := entry.Name()
-		if !strings.HasPrefix(name, "node") {
-			continue
-		}
-
-		// Extract node number
-		nodeNumStr := strings.TrimPrefix(name, "node")
-		nodeNum, err := strconv.ParseUint(nodeNumStr, 10, 32)
-		if err != nil {
-			continue
-		}
-
-		// Count CPUs in this node
-		cpuListPath := filepath.Join(numaPath, name, "cpulist")
-		cpuCount := 0
-		
-		if data, err := os.ReadFile(cpuListPath); err == nil {
-			cpuList := strings.TrimSpace(string(data))
-			cpuCount = countCPUsInList(cpuList)
-		}
-
-		nodes = append(nodes, NumaNodeInfo{
-			NodeNumber: uint32(nodeNum),
-			CPUCount:   cpuCount,
-		})
-	}
-
-	return nodes, nil
-}
-
-// countCPUsInList counts CPUs from a CPU list string (e.g., "0-3,8-11")
-func countCPUsInList(cpuList string) int {
-	if cpuList == "" {
-		return 0
-	}
-
-	count := 0
-	ranges := strings.Split(cpuList, ",")
-	
-	for _, r := range ranges {
-		r = strings.TrimSpace(r)
-		if r == "" {
-			continue
-		}
-
-		if strings.Contains(r, "-") {
-			parts := strings.Split(r, "-")
-			if len(parts) == 2 {
-				start, err1 := strconv.Atoi(strings.TrimSpace(parts[0]))
-				end, err2 := strconv.Atoi(strings.TrimSpace(parts[1]))
-				if err1 == nil && err2 == nil {
-					count += (end - start + 1)
+		// Fetch NUMA topology
+		numa := map[int]int{}
+		for _, f := range files {
+			t := strings.Split(strings.TrimPrefix(f, "/sys/devices/system/node/"), "/")
+			if len(t) > 1 {
+				var n, c int
+				if n, err = strconv.Atoi(strings.TrimPrefix(t[0], "node")); err != nil {
+					continue
 				}
+				if c, err = strconv.Atoi(strings.TrimPrefix(t[1], "cpu")); err != nil {
+					continue
+				}
+				numa[c] = n
 			}
-		} else {
-			count++
+		}
+
+		// Display NUMA topology
+		for _, c := range cpuinfo {
+			n, ok := numa[int(c.CPU)]
+			if !ok {
+				n = -1
+			}
+			log.Printf("CPU:%3d Socket:%3s CoreId:%3s Node:%3d", c.CPU, c.PhysicalID, c.CoreID, n)
 		}
 	}
-
-	return count
-}
-
-// GetNumaTopologyString returns a formatted string describing the NUMA topology
-func GetNumaTopologyString() string {
-	nodes, err := GetNumaTopology()
-	if err != nil {
-		return fmt.Sprintf("NUMA topology unavailable: %v", err)
-	}
-
-	if len(nodes) == 0 {
-		return "No NUMA nodes detected (UMA system)"
-	}
-
-	result := fmt.Sprintf("NUMA Nodes: %d\n", len(nodes))
-	for _, node := range nodes {
-		result += fmt.Sprintf("  Node %d: %d CPUs\n", node.NodeNumber, node.CPUCount)
-	}
-
-	return result
 }

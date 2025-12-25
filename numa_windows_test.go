@@ -33,14 +33,6 @@ func TestGetNumaTopology(t *testing.T) {
 	}
 }
 
-func TestGetNumaTopologyString(t *testing.T) {
-	result := GetNumaTopologyString()
-	if result == "" {
-		t.Fatal("GetNumaTopologyString returned empty string")
-	}
-	t.Logf("NUMA Topology:\n%s", result)
-}
-
 func TestCountBits(t *testing.T) {
 	tests := []struct {
 		mask     uint64

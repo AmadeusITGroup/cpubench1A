@@ -4,8 +4,11 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"syscall"
 	"unsafe"
+
+	"github.com/shirou/gopsutil/v3/cpu"
 )
 
 var (
@@ -66,10 +69,10 @@ type CACHE_RELATIONSHIP struct {
 
 // GROUP_RELATIONSHIP structure
 type GROUP_RELATIONSHIP struct {
-	MaximumGroupCount      uint16
-	ActiveGroupCount       uint16
-	Reserved               [20]byte
-	GroupInfo              [1]PROCESSOR_GROUP_INFO // Variable length array
+	MaximumGroupCount uint16
+	ActiveGroupCount  uint16
+	Reserved          [20]byte
+	GroupInfo         [1]PROCESSOR_GROUP_INFO // Variable length array
 }
 
 // PROCESSOR_GROUP_INFO structure
@@ -171,7 +174,7 @@ func GetNumaTopology() ([]NumaNodeInfo, error) {
 			// The NUMA_NODE_RELATIONSHIP starts after the header (8 bytes)
 			if offset+int(info.Size) <= len(buffer) {
 				numaNode := (*NUMA_NODE_RELATIONSHIP)(unsafe.Pointer(&buffer[offset+8]))
-				
+
 				// Count CPUs in the group mask
 				cpuCount := countBits(numaNode.GroupMask.Mask)
 
@@ -189,7 +192,7 @@ func GetNumaTopology() ([]NumaNodeInfo, error) {
 	// Validate we got expected number of nodes
 	if len(nodes) > 0 && uint32(len(nodes)-1) != highestNode {
 		// This is informational, not an error
-		fmt.Printf("Warning: Expected %d nodes based on highest node number, but found %d nodes\n", 
+		log.Printf("Warning: Expected %d nodes based on highest node number, but found %d nodes\n",
 			highestNode+1, len(nodes))
 	}
 
@@ -206,22 +209,22 @@ func countBits(mask uint64) int {
 	return count
 }
 
-// GetNumaTopologyString returns a formatted string describing the NUMA topology
-func GetNumaTopologyString() string {
+// DisplayNumaTopology displays the NUMA CPU topology
+func DisplayNumaTopology(cpuinfo []cpu.InfoStat) {
+
+	// Get topology information
 	nodes, err := GetNumaTopology()
 	if err != nil {
-		return fmt.Sprintf("NUMA topology unavailable: %v", err)
+		log.Printf("NUMA topology unavailable: %v", err)
+		return
 	}
-
 	if len(nodes) == 0 {
-		return "No NUMA nodes detected (UMA system)"
+		log.Print("No NUMA nodes detected")
+		return
 	}
 
-	result := fmt.Sprintf("NUMA Nodes: %d\n", len(nodes))
+	// Display them
 	for _, node := range nodes {
-		result += fmt.Sprintf("  Node %d: %d CPUs (Group %d, Mask 0x%x)\n",
-			node.NodeNumber, node.CPUCount, node.GroupMask.Group, node.GroupMask.Mask)
+		log.Printf("  Node %d: %d CPUs (Group %d, Mask 0x%x)", node.NodeNumber, node.CPUCount, node.GroupMask.Group, node.GroupMask.Mask)
 	}
-
-	return result
 }
