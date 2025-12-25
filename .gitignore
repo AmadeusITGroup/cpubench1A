@@ -165,3 +165,5 @@ Temporary Items
 .ionide
 
 # End of https://www.toptal.com/developers/gitignore/api/go,macos,intellij+all,visualstudiocode
+
+/cpubench1a
