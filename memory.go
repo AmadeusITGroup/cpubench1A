@@ -2,12 +2,15 @@ package main
 
 import (
 	"bytes"
-	"math/rand"
+	"math/rand/v2"
 )
 
 // Arbitrary seed
-const MEM_SEED = 12345
-const MEM_BLOCK = 13
+const (
+	MEM_SEED1 = 12345
+	MEM_SEED2 = 54321
+	MEM_BLOCK = 13
+)
 
 // BenchMemory is a benchmark exercizing the L2/L3 cache.
 // A buffer is built sequentially by aggregating scattered data.
@@ -38,8 +41,7 @@ func NewBenchMemory() *BenchMemory {
 	}
 
 	// The index will be shuffled at each iteration, but in a deterministic way
-	r := rand.New(rand.NewSource(MEM_SEED))
-	r.Seed(MEM_SEED)
+	r := rand.New(rand.NewPCG(MEM_SEED1, MEM_SEED2))
 
 	res := &BenchMemory{
 		input: input,

@@ -7,7 +7,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -386,7 +385,12 @@ func displayCPU() error {
 		return err
 	}
 
-	log.Printf("CPU: %s / %s", cpuinfo[0].VendorID, cpuinfo[0].ModelName)
+	var s strings.Builder
+	if cpuinfo[0].VendorID != "" {
+		fmt.Fprintf(&s, "%s / ", cpuinfo[0].VendorID)
+	}
+	fmt.Fprint(&s, cpuinfo[0].ModelName)
+	log.Printf("CPU: %s", s.String())
 	log.Printf("Max freq: %.2f mhz (as reported by OS)", cpuinfo[0].Mhz)
 
 	// The core/thread count is wrong on some architectures
@@ -402,35 +406,8 @@ func displayCPU() error {
 	log.Printf("Cores: %d", nc)
 	log.Printf("Threads: %d", nt)
 
-	// NUMA topology retrieval only works on Linux
-	if files, err := filepath.Glob("/sys/devices/system/node/node[0-9]*/cpu[0-9]*"); err == nil && len(files) > 0 {
-
-		// Fetch NUMA topology
-		numa := map[int]int{}
-		for _, f := range files {
-			t := strings.Split(strings.TrimPrefix(f, "/sys/devices/system/node/"), "/")
-			if len(t) > 1 {
-				var n, c int
-				if n, err = strconv.Atoi(strings.TrimPrefix(t[0], "node")); err != nil {
-					continue
-				}
-				if c, err = strconv.Atoi(strings.TrimPrefix(t[1], "cpu")); err != nil {
-					continue
-				}
-				numa[c] = n
-			}
-		}
-
-		// Display NUMA topology
-		for _, c := range cpuinfo {
-			n, ok := numa[int(c.CPU)]
-			if !ok {
-				n = -1
-			}
-			log.Printf("CPU:%3d Socket:%3s CoreId:%3s Node:%3d", c.CPU, c.PhysicalID, c.CoreID, n)
-		}
-	}
-
+	// Display NUMA topology using platform-specific detection
+	DisplayNumaTopology(cpuinfo)
 	log.Print()
 	return nil
 }

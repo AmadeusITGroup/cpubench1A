@@ -3,15 +3,19 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"math/rand"
+	"math/rand/v2"
 	"sort"
 )
 
 // MAXSECS is the maximum number of seconds in a year.
 const MAXSECS = 365 * 24 * 3600
 
-// SIMU_SEED is used to make the random generator deterministic
-const SIMU_SEED = 4321
+const (
+	// SIMU_SEED1 is used to make the random generator deterministic
+	SIMU_SEED1 = 4321
+	// SIMU_SEED2 is used to make the random generator deterministic
+	SIMU_SEED2 = 384172
+)
 
 const (
 	N_NODES              = 12
@@ -105,8 +109,7 @@ func (s Intervals) CheckCollisionTime(t uint32) bool {
 // AddFailures adds multiple failures avoiding collisions.
 func (s *Intervals) AddFailures(n int, r *rand.Rand, mttr uint32) {
 	for n > 0 {
-		t := uint32(r.Int31n(MAXSECS))
-		if !s.AddFailure(t, mttr, true) {
+		if !s.AddFailure(r.Uint32N(MAXSECS), mttr, true) {
 			continue
 		}
 		n--
@@ -116,7 +119,7 @@ func (s *Intervals) AddFailures(n int, r *rand.Rand, mttr uint32) {
 // FindNonFailureTime returns a timestamp which does not match an existing interval.
 func (s Intervals) FindNonFailureTime(r *rand.Rand) uint32 {
 	for {
-		t := uint32(r.Int31n(MAXSECS))
+		t := r.Uint32N(MAXSECS)
 		if !s.CheckCollisionTime(t) {
 			return t
 		}
@@ -278,7 +281,7 @@ func (ay *AvailabilityYear) Reset() {
 func (ay *AvailabilityYear) Build(r *rand.Rand) {
 	ay.buildNodes(r)
 	ay.buildGlobalEvents(r)
-	ay.retrofitGlobalEvents(r)
+	ay.retrofitGlobalEvents()
 }
 
 // BuildNodes populates the initial node views.
@@ -288,7 +291,7 @@ func (ay *AvailabilityYear) buildNodes(r *rand.Rand) {
 	// Each node has a PROB_HW_FAILURE% chance a year to get a hardware failure resulting in MTBR_HW_FAILURE secs outage.
 	for i := range ay.nodes {
 		ay.nodes[i].AddFailures(N_REBOOTS, r, MTBR_REBOOT)
-		if r.Intn(100) < PROB_HW_FAILURE {
+		if r.IntN(100) < PROB_HW_FAILURE {
 			ay.nodes[i].AddFailures(1, r, MTBR_HW_FAILURE)
 		}
 	}
@@ -296,8 +299,8 @@ func (ay *AvailabilityYear) buildNodes(r *rand.Rand) {
 	// Each availability zone has a PROB_NET_FAILURE% chance a year to suffer from a network issue
 	// making it unavailable for MTBR_NET_FAILURE secs.
 	for iZ := 0; iZ < N_ZONES; iZ++ {
-		if r.Intn(100) < PROB_NET_FAILURE {
-			t := uint32(r.Int31n(MAXSECS))
+		if r.IntN(100) < PROB_NET_FAILURE {
+			t := r.Uint32N(MAXSECS)
 			for i := 0; i < ZONE_SIZE; i++ {
 				ay.nodes[iZ*ZONE_SIZE+i].AddFailure(t, MTBR_NET_FAILURE, false)
 			}
@@ -339,7 +342,7 @@ func (ay *AvailabilityYear) buildGlobalEvents(r *rand.Rand) {
 }
 
 // BuildNodes update the node views according to the global events.
-func (ay *AvailabilityYear) retrofitGlobalEvents(r *rand.Rand) {
+func (ay *AvailabilityYear) retrofitGlobalEvents() {
 
 	// Retrofit global events in the node views.
 	idx := 0
@@ -612,6 +615,7 @@ func sum(i int, t []int) int {
 // of a Couchbase cluster.
 type Simulator struct {
 	id  int
+	pcg *rand.PCG
 	r   *rand.Rand
 	ay  *AvailabilityYear
 	res FinalResult
@@ -620,17 +624,19 @@ type Simulator struct {
 // NewSimulator create a simulator instance
 func NewSimulator(n int) *Simulator {
 
+	pcg := rand.NewPCG(SIMU_SEED1, SIMU_SEED2)
 	return &Simulator{
-		id: n,
-		r:  rand.New(rand.NewSource(SIMU_SEED)),
-		ay: NewAvailabilityYear(),
+		id:  n,
+		pcg: pcg,
+		r:   rand.New(pcg),
+		ay:  NewAvailabilityYear(),
 	}
 
 }
 
 // Run starts and runs the simulation for n steps
 func (s *Simulator) Run(n int) {
-	s.r.Seed(SIMU_SEED)
+	s.pcg.Seed(SIMU_SEED1, SIMU_SEED2)
 	for i := 0; i < n; i++ {
 		s.ay.Reset()
 		s.ay.Build(s.r)

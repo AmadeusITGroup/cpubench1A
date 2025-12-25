@@ -2,17 +2,21 @@ package main
 
 import (
 	"fmt"
+	"iter"
 	"log"
 	"strings"
 
 	"github.com/tidwall/btree"
 )
 
+const BTREE_N = 1024
+
 // BenchBtree is a btree benchmark
 type BenchBtree struct {
 	users  []*Item
 	others []*Item
 	sout   []string
+	m      map[string]*Item
 }
 
 // Item is just a simple key/value structure
@@ -21,21 +25,26 @@ type Item struct {
 }
 
 // byKeys is a comparison function that compares item keys
-func byKeys(a, b interface{}) bool {
-	i1, i2 := a.(*Item), b.(*Item)
-	return i1.Key < i2.Key
+func byKeys(a, b *Item) bool {
+	return a.Key < b.Key
 }
 
 // byVals is a comparison function that compares item values
-func byVals(a, b interface{}) bool {
-	i1, i2 := a.(*Item), b.(*Item)
-	if i1.Val < i2.Val {
+func byVals(a, b *Item) bool {
+	if a.Val < b.Val {
 		return true
 	}
-	if i1.Val > i2.Val {
+	if a.Val > b.Val {
 		return false
 	}
 	return byKeys(a, b)
+}
+
+// btreeiter returns a forward iterator on a btree
+func btreeiter[T any](bt *btree.BTreeG[T]) iter.Seq[T] {
+	return func(yield func(t T) bool) {
+		bt.Scan(yield)
+	}
 }
 
 // NewBenchTree allocates a new benchmark object
@@ -52,6 +61,7 @@ func NewBenchBtree() *BenchBtree {
 		{Key: "user:7", Val: "Didier"},
 		{Key: "user:8", Val: "Didier"},
 		{Key: "user:9", Val: "Stephane"},
+		{Key: "customer:1", Val: "Helmut"},
 		{Key: "user:10", Val: "Dirk"},
 		{Key: "user:11", Val: "Dirk"},
 		{Key: "user:12", Val: "Andy"},
@@ -59,16 +69,18 @@ func NewBenchBtree() *BenchBtree {
 		{Key: "user:14", Val: "Dan"},
 		{Key: "user:15", Val: "Anselme"},
 		{Key: "user:16", Val: "John"},
+		{Key: "customer:2", Val: "Gretchen"},
 		{Key: "person:1", Val: "Bob"},
 		{Key: "person:2", Val: "Dan"},
 		{Key: "employee:1", Val: "Peter"},
 		{Key: "employee:2", Val: "Homer"},
+		{Key: "customer:3", Val: "Dietmar"},
 	}
 
 	// Build some more items based on the JSON data
 	others := []*Item{}
 	s := jsonAirlines
-	for i := 0; i < 1024; i++ {
+	for i := range BTREE_N {
 		i1 := strings.IndexByte(s, '"')
 		s = s[i1+1:]
 		i2 := strings.IndexByte(s, '"')
@@ -80,6 +92,7 @@ func NewBenchBtree() *BenchBtree {
 		users:  users,
 		others: others,
 		sout:   make([]string, 0, 2*len(users)),
+		m:      make(map[string]*Item),
 	}
 }
 
@@ -93,33 +106,43 @@ func (b *BenchBtree) Run() {
 func (b *BenchBtree) test1() {
 
 	// Build the 2 btrees
-	keys := btree.New(byKeys)
-	vals := btree.New(byVals)
-
+	keys := btree.NewBTreeG(byKeys)
+	vals := btree.NewBTreeG(byVals)
 	for _, user := range b.users {
 		keys.Set(user)
 		vals.Set(user)
 	}
 
 	// Retrieve all values from them
-	for i := 0; i < 64; i++ {
+	for range 32 {
+
+		// Retrieve all the values that exist
 		for _, user := range b.users {
-			keys.Get(user)
-			vals.Get(user)
+			_, ok1 := keys.Get(user)
+			_, ok2 := vals.Get(user)
+			if !(ok1 && ok2) {
+				log.Fatal("btree: item just inserted not found")
+			}
+		}
+
+		// Retrieve a value which does not exist
+		u := Item{"XXX", "YYY"}
+		_, ok1 := keys.Get(&u)
+		_, ok2 := vals.Get(&u)
+		if ok1 || ok2 {
+			log.Fatal("btree: item not inserted found")
 		}
 	}
 
-	// Build a list of values by forward iteration
-	keys.Ascend(nil, func(item interface{}) bool {
-		b.sout = append(b.sout, item.(*Item).Val)
-		return true
-	})
+	// Build a list of values by forward iteration on the keys
+	for item := range btreeiter(keys) {
+		b.sout = append(b.sout, item.Val)
+	}
 
-	// Complete with a list of keys by forward iteration
-	vals.Ascend(nil, func(item interface{}) bool {
-		b.sout = append(b.sout, item.(*Item).Key)
-		return true
-	})
+	// Complete with a list of keys by forward iteration on the values
+	for item := range btreeiter(vals) {
+		b.sout = append(b.sout, item.Key)
+	}
 
 	// Sanity check
 	if len(b.sout) != 2*len(b.users) {
@@ -131,33 +154,32 @@ func (b *BenchBtree) test1() {
 // test2 builds a bigger btree with a map, and compare items between them, before iterating on the btree
 func (b *BenchBtree) test2() {
 
-	keys := btree.New(byKeys)
+	keys := btree.NewBTreeG(byKeys)
 
 	// Build the btree and the map
-	m := make(map[string]*Item, 128)
+	clear(b.m)
 	for _, other := range b.others {
 		keys.Set(other)
-		m[other.Key] = other
+		b.m[other.Key] = other
 	}
 
 	// Retrieve all items by keys, and compare the associated values
 	for _, other := range b.others {
-		res := keys.Get(other)
-		if res == nil {
-			log.Fatal("Key not found")
+		res, ok := keys.Get(other)
+		if !ok {
+			log.Fatal("btree: key not found")
 		}
-		if strings.Compare(m[other.Key].Val, res.(*Item).Val) != 0 {
-			log.Fatal("Value discrepancy")
+		if b.m[other.Key].Val != res.Val {
+			log.Fatal("btree: value discrepancy")
 		}
 	}
 
 	// Forward iteration on the btree to count items
 	n := 0
-	keys.Ascend(nil, func(item interface{}) bool {
+	for range btreeiter(keys) {
 		n++
-		return true
-	})
-	if n != keys.Len() {
-		log.Fatal("Length discrepancy")
+	}
+	if n != keys.Len() || n != len(b.m) {
+		log.Fatal("btree: length discrepancy")
 	}
 }
