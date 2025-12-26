@@ -16,6 +16,7 @@ type BenchCompression struct {
 	buf1 bytes.Buffer
 	buf2 bytes.Buffer
 	w    *zlib.Writer
+	r    io.ReadCloser
 }
 
 // NewBenchCompression allocates a new benchmark object
@@ -52,12 +53,17 @@ func (b *BenchCompression) Run() {
 
 	// Uncompress the decoded result
 	b.buf2.Reset()
-	r, err := zlib.NewReader(&b.buf1)
+	var err error
+	if b.r == nil {
+		b.r, err = zlib.NewReader(&b.buf1)
+	} else {
+		err = b.r.(zlib.Resetter).Reset(&b.buf1, nil)
+	}
 	if err != nil {
 		log.Fatal("Error", err)
 	}
-	io.Copy(&b.buf2, r)
-	r.Close()
+	io.Copy(&b.buf2, b.r)
+	b.r.Close()
 
 	// Calculate a second hash code on the result
 	h.Reset()
