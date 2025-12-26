@@ -38,10 +38,10 @@ jobs:
       - name: Program Test 2
         run: go test -bench=. -benchmem ./...
 
-      - name: Version
-        if: github.event_name != 'pull_request'
-        uses: cycjimmy/semantic-release-action@v4.1.1
-        with:
-          semantic_version: 17.4
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#      - name: Version
+#        if: github.event_name != 'pull_request'
+#        uses: cycjimmy/semantic-release-action@v4.1.1
+#        with:
+#          semantic_version: 17.4
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
