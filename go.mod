@@ -3,7 +3,7 @@ module cpubench1a
 go 1.25
 
 require (
-	github.com/benhoyt/goawk v1.29.1
+	github.com/benhoyt/goawk v1.31.0
 	github.com/shirou/gopsutil/v3 v3.24.5
 	github.com/tidwall/btree v1.8.1
 	github.com/tidwall/gjson v1.18.0
