@@ -10,7 +10,9 @@ import (
 
 // BenchAwk is a benchmark around Awk code interpretation
 type BenchAwk struct {
-	res bytes.Buffer
+	res    bytes.Buffer
+	config *interp.Config
+	prog   *parser.Program
 }
 
 // awkPROG1 is a piece of AWK Mandelbrot calculation code.
@@ -63,7 +65,17 @@ END { print "Resulat", a, c }
 
 // NewBenchAwk allocates a new benchmark object
 func NewBenchAwk() *BenchAwk {
-	return &BenchAwk{}
+
+	prog, err := parser.ParseProgram(awkPROG2, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	config := &interp.Config{Vars: []string{"FS", ":"}}
+
+	return &BenchAwk{
+		prog:   prog,
+		config: config,
+	}
 }
 
 // Run parses and executes the two AWK programs
@@ -74,6 +86,8 @@ func (b *BenchAwk) Run() {
 
 // test1 generates the Mandelbrot set by parsing and executing some AWK code
 func (b *BenchAwk) test1() {
+
+	// Test parsing overhead
 	prog, err := parser.ParseProgram(awkPROG1, nil)
 	if err != nil {
 		log.Fatal(err)
@@ -83,6 +97,8 @@ func (b *BenchAwk) test1() {
 		Output: &b.res,
 		Vars:   []string{"OFS", ":"},
 	}
+
+	// Test program execution
 	_, err = interp.ExecProgram(prog, config)
 	if err != nil {
 		log.Fatal(err)
@@ -92,17 +108,14 @@ func (b *BenchAwk) test1() {
 
 // test2 filters some input data by running a AWK program
 func (b *BenchAwk) test2() {
-	prog, err := parser.ParseProgram(awkPROG2, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	config := &interp.Config{
-		Stdin:  bytes.NewReader(jsonAirlinesB[:20000]),
-		Output: &b.res,
-		Vars:   []string{"FS", ":"},
-	}
-	_, err = interp.ExecProgram(prog, config)
-	if err != nil {
+
+	// We do not care about the parsing, reuse the program
+	b.config.Stdin = bytes.NewReader(jsonAirlinesB[:20000])
+	b.config.Output = &b.res
+
+	// Test program execution
+	n, err := interp.ExecProgram(b.prog, b.config)
+	if err != nil || n != 0 {
 		log.Fatal(err)
 	}
 	b.res.Reset()
